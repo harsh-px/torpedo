@@ -1,15 +1,8 @@
 package scheduler
 
 import (
-	"errors"
-	"os"
-	"strings"
-
 	"github.com/portworx/torpedo/drivers"
-)
-
-var (
-	nodes []string
+	"github.com/portworx/torpedo/pkg/errors"
 )
 
 const (
@@ -24,26 +17,23 @@ const (
 type Volume struct {
 	Driver string
 	Name   string
-	Path   string
-	Size   int // in MB
-	Opt    []string
+	Size   int // in GB
 }
 
-// Task specifies the Docker properties of a test task.
-type Task struct {
-	Name string
-	Img  string
-	Tag  string
-	Env  []string
-	Cmd  []string
-	Vol  Volume
-	IP   string
+// App encapsulates an application run within a scheduler
+type App struct {
+	ID       string
+	Name     string
+	Replicas int
+	Vol      Volume
+	// Nodes in which to run the task. If empty, scheduler will pick the node(s).
+	Nodes []string
 }
 
 // Context holds the execution context and output values of a test task.
 type Context struct {
 	ID     string
-	Task   Task
+	App    App
 	Status int
 	Stdout string
 	Stderr string
@@ -57,8 +47,8 @@ type Driver interface {
 	// GetNodes returns an array of all nodes in the cluster.
 	GetNodes() ([]string, error)
 
-	// Create creates a task context.  Does not start the task.
-	Create(Task) (*Context, error)
+	// Create creates a task context. Does not start the task.
+	Create(App) (*Context, error)
 
 	// Schedule starts a task
 	Schedule(*Context) error
@@ -66,37 +56,33 @@ type Driver interface {
 	// WaitDone waits for task to complete.
 	WaitDone(*Context) error
 
-	// Run runs a task to completion.
-	Run(*Context) error
-
-	// Destroy removes a task.  Must also delete the external volume.
+	// Destroy removes a task. Must also delete the external volume.
 	Destroy(*Context) error
 
-	// DestroyByName removes a task by name.  Must also delete the external volume.
-	DestroyByName(ip, name string) error
-
 	// InspectVolume inspects a storage volume.
-	InspectVolume(ip, name string) (*Volume, error)
+	InspectVolume(name string) error
 
 	// DeleteVolume will delete a storage volume.
-	DeleteVolume(ip, name string) error
+	DeleteVolume(name string) error
 }
 
 var (
 	schedulers = make(map[string]Driver)
 )
 
-func register(name string, d Driver) error {
+// Register registers the given scheduler driver
+func Register(name string, d Driver) error {
 	schedulers[name] = d
 	return nil
 }
 
 // Get returns a registered scheduler test provider.
 func Get(name string) (Driver, error) {
-	nodes = strings.Split(os.Getenv("CLUSTER_NODES"), ",")
-
 	if d, ok := schedulers[name]; ok {
 		return d, nil
 	}
-	return nil, errors.New("No such scheduler driver installed")
+	return nil, &errors.ErrNotFound{
+		ID:   name,
+		Type: "Scheduler",
+	}
 }

@@ -1,9 +1,8 @@
 package volume
 
 import (
-	"errors"
-	"os"
-	"strings"
+	"github.com/portworx/torpedo/drivers"
+	"github.com/portworx/torpedo/pkg/errors"
 )
 
 // Driver defines an external volume driver interface that must be implemented
@@ -11,16 +10,19 @@ import (
 // Torpedo.  The functions defined here are meant to be destructive and illustrative
 // of failure scenarious that can happen with an external storage provider.
 type Driver interface {
+	// Driver provides the basic service manipulation routines.
+	drivers.Driver
+
 	// String returns the string name of this driver.
 	String() string
-
-	// Init initializes the volume driver.
-	Init() error
 
 	// CleanupVolume forcefully unmounts/detaches and deletes a storage volume.
 	// This is only called by Torpedo during cleanup operations, it is not
 	// used during orchestration simulations.
 	CleanupVolume(name string) error
+
+	// InspectVolume inspects a storage volume.
+	InspectVolume(name string) error
 
 	// Stop must cause the volume driver to exit or get killed on a given node.
 	StopDriver(ip string) error
@@ -33,25 +35,24 @@ type Driver interface {
 }
 
 var (
-	nodes   []string
-	drivers = make(map[string]Driver)
+	volDrivers = make(map[string]Driver)
 )
 
-func register(name string, d Driver) error {
-	drivers[name] = d
+// Register registers the given volume driver
+func Register(name string, d Driver) error {
+	volDrivers[name] = d
 	return nil
 }
 
 // Get an external storage provider to be used with Torpedo.
 func Get(name string) (Driver, error) {
-	d, ok := drivers[name]
+	d, ok := volDrivers[name]
 	if ok {
 		return d, nil
 	}
 
-	return nil, errors.New("No such volume driver installed")
-}
-
-func init() {
-	nodes = strings.Split(os.Getenv("CLUSTER_NODES"), ",")
+	return nil, &errors.ErrNotFound{
+		ID:   name,
+		Type: "VolumeDriver",
+	}
 }
