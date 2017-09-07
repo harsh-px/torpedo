@@ -77,7 +77,7 @@ func GetRootUIDGID(uidMap, gidMap []IDMap) (int, int, error) {
 }
 
 // ToContainer takes an id mapping, and uses it to translate a
-// host ID to the remapped ID. If no map is provided, then the translation
+// host UID to the remapped UID. If no map is provided, then the translation
 // assumes a 1-to-1 mapping and returns the passed in id
 func ToContainer(hostID int, idMap []IDMap) (int, error) {
 	if idMap == nil {
@@ -89,11 +89,11 @@ func ToContainer(hostID int, idMap []IDMap) (int, error) {
 			return contID, nil
 		}
 	}
-	return -1, fmt.Errorf("Host ID %d cannot be mapped to a container ID", hostID)
+	return -1, fmt.Errorf("Host UID %d cannot be mapped to a container UID", hostID)
 }
 
 // ToHost takes an id mapping and a remapped ID, and translates the
-// ID to the mapped host ID. If no map is provided, then the translation
+// UID to the mapped host UID. If no map is provided, then the translation
 // assumes a 1-to-1 mapping and returns the passed in id #
 func ToHost(contID int, idMap []IDMap) (int, error) {
 	if idMap == nil {
@@ -105,7 +105,7 @@ func ToHost(contID int, idMap []IDMap) (int, error) {
 			return hostID, nil
 		}
 	}
-	return -1, fmt.Errorf("Container ID %d cannot be mapped to a host ID", contID)
+	return -1, fmt.Errorf("Container UID %d cannot be mapped to a host UID", contID)
 }
 
 // CreateIDMappings takes a requested user and group name and

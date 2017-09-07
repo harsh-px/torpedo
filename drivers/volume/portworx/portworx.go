@@ -28,6 +28,7 @@ type portworx struct {
 	hostConfig     *dockerclient.HostConfig
 	clusterManager cluster.Cluster
 	volDriver      volume.VolumeDriver
+	schedDriver    scheduler.Driver
 }
 
 func (d *portworx) String() string {
@@ -36,12 +37,13 @@ func (d *portworx) String() string {
 
 func (d *portworx) Init(sched string) error {
 	logrus.Infof("Using the Portworx volume driver under scheduler: %v", sched)
-	s, err := scheduler.Get(sched)
+	var err error
+	d.schedDriver, err = scheduler.Get(sched)
 	if err != nil {
 		return err
 	}
 
-	nodes, err := s.GetNodes()
+	nodes, err := d.schedDriver.GetNodes()
 	if err != nil {
 		return err
 	}
@@ -79,7 +81,7 @@ func (d *portworx) Init(sched string) error {
 	logrus.Infof("The following Portworx nodes are in the cluster:\n")
 	for _, n := range cluster.Nodes {
 		logrus.Infof(
-			"\tNode ID: %v\tNode IP: %v\tNode Status: %v\n",
+			"\tNode UID: %v\tNode IP: %v\tNode Status: %v\n",
 			n.Id,
 			n.DataIp,
 			n.Status,
@@ -179,13 +181,13 @@ func (d *portworx) StopDriver(ip string) error {
 		if strings.Contains(info.Config.Image, "px") {
 			if !info.State.Running {
 				return fmt.Errorf(
-					"portworx container with ID %v is not running",
+					"portworx container with UID %v is not running",
 					c.ID,
 				)
 			}
 
 			d.hostConfig = info.HostConfig
-			logrus.Printf("Stopping Portworx container with ID: %v\n", c.ID)
+			logrus.Printf("Stopping Portworx container with UID: %v\n", c.ID)
 			if err = docker.StopContainer(c.ID, 0); err != nil {
 				return err
 			}
@@ -245,12 +247,12 @@ func (d *portworx) StartDriver(ip string) error {
 		if strings.Contains(info.Config.Image, "px") {
 			if info.State.Running {
 				return fmt.Errorf(
-					"portworx container with ID %v is not stopped",
+					"portworx container with UID %v is not stopped",
 					c.ID,
 				)
 			}
 
-			logrus.Printf("Starting Portworx container with ID: %v\n", c.ID)
+			logrus.Printf("Starting Portworx container with UID: %v\n", c.ID)
 			if err = docker.StartContainer(c.ID, d.hostConfig); err != nil {
 				return err
 			}

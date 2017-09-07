@@ -1,0 +1,24 @@
+package factory
+
+import (
+	"github.com/portworx/torpedo/drivers/scheduler/k8s/spec"
+	"github.com/portworx/torpedo/pkg/errors"
+)
+
+var appSpecFactory = make(map[string]spec.AppSpec)
+
+// Register registers a new spec with the factory
+func Register(id string, app spec.AppSpec) {
+	appSpecFactory[id] = app
+}
+
+// Get returns a registered application
+func Get(id string) (spec.AppSpec, error) {
+	if d, ok := appSpecFactory[id]; ok {
+		return d, nil
+	}
+	return nil, &errors.ErrNotFound{
+		ID:   id,
+		Type: "AppSpec",
+	}
+}

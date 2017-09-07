@@ -358,7 +358,7 @@ type ULimit struct {
 
 // SwarmNode containers information about which Swarm node the container is on.
 type SwarmNode struct {
-	ID     string            `json:"ID,omitempty" yaml:"ID,omitempty" toml:"ID,omitempty"`
+	ID     string            `json:"UID,omitempty" yaml:"UID,omitempty" toml:"UID,omitempty"`
 	IP     string            `json:"IP,omitempty" yaml:"IP,omitempty" toml:"IP,omitempty"`
 	Addr   string            `json:"Addr,omitempty" yaml:"Addr,omitempty" toml:"Addr,omitempty"`
 	Name   string            `json:"Name,omitempty" yaml:"Name,omitempty" toml:"Name,omitempty"`

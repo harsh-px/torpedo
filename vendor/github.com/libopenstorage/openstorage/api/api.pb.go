@@ -587,8 +587,8 @@ func (m *StorageResource) GetLastScan() *google_protobuf.Timestamp {
 
 // StoragePool groups different storage devices based on their CosType
 type StoragePool struct {
-	// ID pool ID
-	ID int32 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+	// UID pool UID
+	ID int32 `protobuf:"varint,1,opt,name=UID" json:"UID,omitempty"`
 	// Cos reflects the capabilities of this drive pool
 	Cos CosType `protobuf:"varint,2,opt,name=Cos,enum=openstorage.api.CosType" json:"Cos,omitempty"`
 	// Medium underlying storage type

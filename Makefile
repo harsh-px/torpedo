@@ -84,7 +84,7 @@ container:
 	@echo "Building container: docker build --tag $(TORPEDO_IMG) -f Dockerfile ."
 	sudo docker build --tag $(TORPEDO_IMG) -f Dockerfile .
 
-deploy: all
+deploy: all container
 	docker push $(TORPEDO_IMG)
 
 clean:

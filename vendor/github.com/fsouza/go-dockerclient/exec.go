@@ -167,7 +167,7 @@ type ExecProcessConfig struct {
 //
 // See https://goo.gl/ctMUiW for more details
 type ExecInspect struct {
-	ID            string            `json:"ID,omitempty" yaml:"ID,omitempty" toml:"ID,omitempty"`
+	ID            string            `json:"UID,omitempty" yaml:"UID,omitempty" toml:"UID,omitempty"`
 	ExitCode      int               `json:"ExitCode,omitempty" yaml:"ExitCode,omitempty" toml:"ExitCode,omitempty"`
 	Running       bool              `json:"Running,omitempty" yaml:"Running,omitempty" toml:"Running,omitempty"`
 	OpenStdin     bool              `json:"OpenStdin,omitempty" yaml:"OpenStdin,omitempty" toml:"OpenStdin,omitempty"`

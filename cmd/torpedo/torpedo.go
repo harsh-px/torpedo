@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/portworx/torpedo/drivers/scheduler"
 	"github.com/portworx/torpedo/drivers/volume"
 	"github.com/portworx/torpedo/pkg/errors"
-	"strconv"
 )
 
 type torpedo struct {
@@ -29,33 +29,15 @@ func (t *torpedo) testDynamicVolume() error {
 
 	appID := "postgres" // TODO: randomly pick appID from repo of apps the sched impl might have.
 	appName := fmt.Sprintf("%s-%s", appID, taskName)
-	volName := fmt.Sprintf("%s-data", appID)
-
-	vol := scheduler.Volume{
-		Driver: t.v.String(),
-		Name:   volName,
-		Size:   2,
-	}
 
 	app := scheduler.App{
-		ID:       appID,
+		Key:      appID,
 		Name:     appName,
 		Replicas: 1,
-		Vol:      vol,
 	}
 
-	ctx, err := t.s.Create(app)
+	ctx, err := t.s.Schedule(app)
 	if err != nil {
-		return err
-	}
-
-	t.cleanupAppAndVol(ctx, vol, false)
-
-	defer func() error {
-		return t.cleanupAppAndVol(ctx, vol, true)
-	}()
-
-	if err = t.s.Schedule(ctx); err != nil {
 		return err
 	}
 
@@ -67,52 +49,90 @@ func (t *torpedo) testDynamicVolume() error {
 		)
 	}
 
-	if err := t.validateVolume(vol); err != nil {
+	if err := t.validateVolumes(ctx); err != nil {
+		return err
+	}
+
+	if err := t.tearDownContext(ctx); err != nil {
 		return err
 	}
 
 	return err
 }
 
-// validateVolume validates the volume with the scheduler and volume driver
-func (t *torpedo) validateVolume(vol scheduler.Volume) error {
-	if err := t.s.InspectVolume(vol.Name); err != nil {
+// validateVolumes validates the volume with the scheduler and volume driver
+func (t *torpedo) validateVolumes(ctx *scheduler.Context) error {
+	if err := t.s.InspectVolumes(ctx); err != nil {
 		return &errors.ErrValidateVol{
-			ID:    vol.Name,
+			ID:    ctx.UID,
 			Cause: err.Error(),
 		}
 	}
 
-	if err := t.v.InspectVolume(vol.Name); err != nil {
+	// Get all volumes and ask volume driver to inspect them
+	volumes, err := t.s.GetVolumes(ctx)
+	if err != nil {
 		return &errors.ErrValidateVol{
-			ID:    vol.Name,
+			ID:    ctx.UID,
 			Cause: err.Error(),
+		}
+	}
+
+	for _, vol := range volumes {
+		if err := t.v.InspectVolume(vol); err != nil {
+			return &errors.ErrValidateVol{
+				ID:    ctx.UID,
+				Cause: err.Error(),
+			}
 		}
 	}
 
 	return nil
 }
-func (t *torpedo) cleanupAppAndVol(ctx *scheduler.Context, vol scheduler.Volume, bestEffort bool) error {
+
+func (t *torpedo) tearDownContext(ctx *scheduler.Context) error {
+	if err := t.s.Destroy(ctx); err != nil {
+		return err
+	}
+
+	if err := t.s.DeleteVolumes(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+/*func (t *torpedo) cleanupAppAndVol(spec scheduler.App, bestEffort bool) error {
 	var e error
 
-	if err := t.s.Destroy(ctx); err != nil {
-		logrus.Errorf("Failed to destroy context: %v. Err: %v", ctx.ID, err)
+	if err := t.s.DestroyByName(spec.Name); err != nil {
+		logrus.Errorf("Failed to destroy spec: %v. Err: %v", spec.Name, err)
 		if !bestEffort {
 			return err
 		}
 		e = err
 	}
 
-	if err := t.v.CleanupVolume(vol.Name); err != nil {
-		logrus.Errorf("Failed to cleanup volume: %v. Err: %v", vol.Name, err)
-		if !bestEffort {
-			return err
+	// Get all volumes and ask volume driver to inspect them
+	volumes, err := t.s.GetVolumes(ctx)
+	if err != nil {
+		return &errors.ErrValidateVol{
+			UID:    ctx.UID,
+			Cause: err.Error(),
 		}
-		e = err
+	}
+
+	for _, vol := range volumes {
+		if err := t.v.CleanupVolume(vol); err != nil {
+			logrus.Errorf("Failed to cleanup volume: %v. Err: %v", vol.Name, err)
+			if !bestEffort {
+				return err
+			}
+			e = err
+		}
 	}
 
 	return e
-}
+}*/
 
 // Volume Driver Plugin is down, unavailable - and the client container should
 // not be impacted.
@@ -273,7 +293,7 @@ func (t *torpedo) testDriverDownContainerDown() error {
 
 		// Check to see if you can delete the volume from another node
 		logrus.Infof("Deleting the attached volume: %v from %v\n", volName, nodes[1])
-		if err = s.DeleteVolume(volName); err != nil {
+		if err = s.DeleteVolumes(volName); err != nil {
 			return err
 		}
 	*/
@@ -399,7 +419,7 @@ func (t *torpedo) testRemoteForceMount() error {
 
 		// Check to see if you can delete the volume.
 		logrus.Infof("Deleting the attached volume: %v from this host\n", volName)
-		if err = s.DeleteVolume(volName); err != nil {
+		if err = s.DeleteVolumes(volName); err != nil {
 			return err
 		}*/
 	return nil
@@ -467,7 +487,7 @@ func (t *torpedo) run(testName string) error {
 			f, ok := testFuncs[testName]
 			if !ok {
 				return &errors.ErrNotFound{
-					ID:   testName,
+					UID:   testName,
 					Type: "Test",
 				}
 			}

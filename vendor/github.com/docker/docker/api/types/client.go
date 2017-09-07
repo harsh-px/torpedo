@@ -287,7 +287,7 @@ type ServiceCreateOptions struct {
 // ServiceCreateResponse contains the information returned to a client
 // on the creation of a new service.
 type ServiceCreateResponse struct {
-	// ID is the ID of the created service.
+	// UID is the UID of the created service.
 	ID string
 	// Warnings is a set of non-fatal warning messages to pass on to the user.
 	Warnings []string `json:",omitempty"`

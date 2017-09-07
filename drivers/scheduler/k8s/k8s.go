@@ -52,12 +52,11 @@ func (k *k8s) Init() error {
 	return nil
 }
 
-func (k *k8s) Create(app scheduler.App) (*scheduler.Context, error) {
-	return nil, nil
-}
+func (k *k8s) Schedule(app scheduler.App) (*scheduler.Context, error) {
+	// Find spec from factory
 
-func (k *k8s) Schedule(ctx *scheduler.Context) error {
-	return nil
+	// For all objects of the spec, create them in a loop
+	return nil, nil
 }
 
 func (k *k8s) WaitDone(ctx *scheduler.Context) error {
@@ -68,11 +67,15 @@ func (k *k8s) Destroy(ctx *scheduler.Context) error {
 	return nil
 }
 
-func (k *k8s) InspectVolume(name string) error {
+func (k *k8s) GetVolumes(ctx *scheduler.Context) ([]string, error) {
+	return nil, nil
+}
+
+func (k *k8s) InspectVolumes(ctx *scheduler.Context) error {
 	return nil
 }
 
-func (k *k8s) DeleteVolume(name string) error {
+func (k *k8s) DeleteVolumes(ctx *scheduler.Context) error {
 	return nil
 }
 

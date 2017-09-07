@@ -22,26 +22,18 @@ type Node struct {
 	Type      NodeType
 }
 
-// Volume specifies the parameters for creating an external volume.
-type Volume struct {
-	Driver string
-	Name   string
-	Size   int // in GB
-}
-
 // App encapsulates an application run within a scheduler
 type App struct {
-	ID       string
+	Key      string
 	Name     string
 	Replicas int
-	Vol      Volume
 	// Nodes in which to run the task. If empty, scheduler will pick the node(s).
 	Nodes []Node
 }
 
 // Context holds the execution context and output values of a test task.
 type Context struct {
-	ID     string
+	UID    string
 	App    App
 	Status int
 	Stdout string
@@ -59,23 +51,23 @@ type Driver interface {
 	// GetNodes returns an array of all nodes in the cluster.
 	GetNodes() ([]Node, error)
 
-	// Create creates a task context. Does not start the task.
-	Create(App) (*Context, error)
-
 	// Schedule starts a task
-	Schedule(*Context) error
+	Schedule(App) (*Context, error)
 
-	// WaitDone waits for task to complete.
+	// WaitDone waits for task to complete. This is relevant only for tasks that are expected to complete and not perpetual tasks.
 	WaitDone(*Context) error
 
-	// Destroy removes a task. Must also delete the external volume.
+	// Destroy removes a task. It does not delete the volumes of the task.
 	Destroy(*Context) error
 
-	// InspectVolume inspects a storage volume.
-	InspectVolume(name string) error
+	// Returns list of volume IDs using by given context
+	GetVolumes(*Context) ([]string, error)
 
-	// DeleteVolume will delete a storage volume.
-	DeleteVolume(name string) error
+	// InspectVolumes inspects a storage volume.
+	InspectVolumes(*Context) error
+
+	// DeleteVolumes will delete a storage volume.
+	DeleteVolumes(*Context) error
 }
 
 var (

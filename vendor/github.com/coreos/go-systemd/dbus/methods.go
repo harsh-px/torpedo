@@ -85,7 +85,7 @@ func (c *Conn) startJob(ch chan<- string, job string, args ...interface{}) (int,
 //
 // If no error occurs, the ID of the underlying systemd job will be returned. There
 // does exist the possibility for no error to be returned, but for the returned job
-// ID to be 0. In this case, the actual underlying ID is not 0 and this datapoint
+// UID to be 0. In this case, the actual underlying UID is not 0 and this datapoint
 // should not be considered authoritative.
 //
 // If an error does occur, it will be returned to the user alongside a job ID of 0.
