@@ -8,6 +8,7 @@ import (
 	"github.com/portworx/torpedo/drivers/scheduler"
 	"github.com/portworx/torpedo/drivers/volume"
 	"github.com/portworx/torpedo/pkg/errors"
+	"strconv"
 )
 
 type torpedo struct {
@@ -164,7 +165,7 @@ func (t *torpedo) testDriverDown() error {
 		time.Sleep(20 * time.Second)
 
 		// Stop the volume driver.
-		logrus.Printf("Stopping the %v volume driver\n", v.String())
+		logrus.Infof("Stopping the %v volume driver\n", v.String())
 		if err = v.StopDriver(ctx.Task.IP); err != nil {
 			return err
 		}
@@ -173,12 +174,12 @@ func (t *torpedo) testDriverDown() error {
 		time.Sleep(20 * time.Second)
 
 		// Restart the volume driver.
-		logrus.Printf("Starting the %v volume driver\n", v.String())
+		logrus.Infof("Starting the %v volume driver\n", v.String())
 		if err = v.StartDriver(ctx.Task.IP); err != nil {
 			return err
 		}
 
-		logrus.Printf("Waiting for the test task to exit\n")
+		logrus.Infof("Waiting for the test task to exit\n")
 		if err = s.WaitDone(ctx); err != nil {
 			return err
 		}
@@ -245,13 +246,13 @@ func (t *torpedo) testDriverDownContainerDown() error {
 		time.Sleep(20 * time.Second)
 
 		// Stop the volume driver.
-		logrus.Printf("Stopping the %v volume driver\n", v.String())
+		logrus.Infof("Stopping the %v volume driver\n", v.String())
 		if err = v.StopDriver(ctx.Task.IP); err != nil {
 			return err
 		}
 
 		// Wait for the task to exit. This will lead to a lost Unmount/Detach call.
-		logrus.Printf("Waiting for the test task to exit\n")
+		logrus.Infof("Waiting for the test task to exit\n")
 		if err = s.WaitDone(ctx); err != nil {
 			return err
 		}
@@ -265,13 +266,13 @@ func (t *torpedo) testDriverDownContainerDown() error {
 		}
 
 		// Restart the volume driver.
-		logrus.Printf("Starting the %v volume driver\n", v.String())
+		logrus.Infof("Starting the %v volume driver\n", v.String())
 		if err = v.StartDriver(ctx.Task.IP); err != nil {
 			return err
 		}
 
 		// Check to see if you can delete the volume from another node
-		logrus.Printf("Deleting the attached volume: %v from %v\n", volName, nodes[1])
+		logrus.Infof("Deleting the attached volume: %v from %v\n", volName, nodes[1])
 		if err = s.DeleteVolume(volName); err != nil {
 			return err
 		}
@@ -322,7 +323,7 @@ func (t *torpedo) testRemoteForceMount() error {
 		}
 		defer func() {
 			if err = sc.Start(dockerServiceName); err != nil {
-				logrus.Printf("Error while restarting Docker: %v\n", err)
+				logrus.Infof("Error while restarting Docker: %v\n", err)
 			}
 			if ctx != nil {
 				s.Destroy(ctx)
@@ -330,7 +331,7 @@ func (t *torpedo) testRemoteForceMount() error {
 			v.CleanupVolume(volName)
 		}()
 
-		logrus.Printf("Starting test task on local node.\n")
+		logrus.Infof("Starting test task on local node.\n")
 		if err = s.Schedule(ctx); err != nil {
 			return err
 		}
@@ -339,7 +340,7 @@ func (t *torpedo) testRemoteForceMount() error {
 		time.Sleep(20 * time.Second)
 
 		// Kill Docker.
-		logrus.Printf("Stopping Docker.\n")
+		logrus.Infof("Stopping Docker.\n")
 		if err = sc.Stop(dockerServiceName); err != nil {
 			return err
 		}
@@ -348,10 +349,10 @@ func (t *torpedo) testRemoteForceMount() error {
 		time.Sleep(40 * time.Second)
 
 		// Start a task on a new system with this same volume.
-		logrus.Printf("Creating the test task on a new host.\n")
+		logrus.Infof("Creating the test task on a new host.\n")
 		t.IP = scheduler.ExternalHost
 		if ctx, err = s.Create(t); err != nil {
-			logrus.Printf("Error while creating remote task: %v\n", err)
+			logrus.Infof("Error while creating remote task: %v\n", err)
 			return err
 		}
 
@@ -363,7 +364,7 @@ func (t *torpedo) testRemoteForceMount() error {
 		time.Sleep(20 * time.Second)
 
 		// Wait for the task to exit. This will lead to a lost Unmount/Detach call.
-		logrus.Printf("Waiting for the test task to exit\n")
+		logrus.Infof("Waiting for the test task to exit\n")
 		if err = s.WaitDone(ctx); err != nil {
 			return err
 		}
@@ -377,11 +378,11 @@ func (t *torpedo) testRemoteForceMount() error {
 		}
 
 		// Restart Docker.
-		logrus.Printf("Restarting Docker.\n")
+		logrus.Infof("Restarting Docker.\n")
 		for i, err := 0, sc.Start(dockerServiceName); err != nil; i, err = i+1, sc.Start(dockerServiceName) {
 			if err.Error() == systemd.JobExecutionTookTooLongError.Error() {
 				if i < 20 {
-					logrus.Printf("Docker taking too long to start... retry attempt %v\n", i)
+					logrus.Infof("Docker taking too long to start... retry attempt %v\n", i)
 				} else {
 					return fmt.Errorf("could not restart Docker")
 				}
@@ -391,13 +392,13 @@ func (t *torpedo) testRemoteForceMount() error {
 		}
 
 		// Wait for the volume driver to start.
-		logrus.Printf("Waiting for the %v volume driver to start back up\n", v.String())
+		logrus.Infof("Waiting for the %v volume driver to start back up\n", v.String())
 		if err = v.WaitStart(ctx.Task.IP); err != nil {
 			return err
 		}
 
 		// Check to see if you can delete the volume.
-		logrus.Printf("Deleting the attached volume: %v from this host\n", volName)
+		logrus.Infof("Deleting the attached volume: %v from this host\n", volName)
 		if err = s.DeleteVolume(volName); err != nil {
 			return err
 		}*/
@@ -436,55 +437,57 @@ func (t *torpedo) testDockerDownLiveRestore() error {
 }
 
 func (t *torpedo) run(testName string) error {
+	logrus.Infof("Running torpedo test: %v", t.instanceID)
+
 	if err := t.s.Init(); err != nil {
 		logrus.Fatalf("Error initializing schedule driver. Err: %v", err)
 		return err
 	}
 
-	if err := t.v.Init(); err != nil {
+	if err := t.v.Init(t.s.String()); err != nil {
 		logrus.Fatalf("Error initializing volume driver. Err: %v", err)
 		return err
 	}
 
 	// Add new test functions here.
-	testFuncs := map[string]testDriverFunc{
-		"testDynamicVolume":           t.testDynamicVolume,
-		"testRemoteForceMount":        t.testRemoteForceMount,
-		"testDriverDown":              t.testDriverDown,
-		"testDriverDownContainerDown": t.testDriverDownContainerDown,
-		"testNodePowerOff":            t.testNodePowerOff,
-		"testPluginDown":              t.testPluginDown,
-		"testNetworkDown":             t.testNetworkDown,
-		"testNetworkPartition":        t.testNetworkPartition,
-		"testDockerDownLiveRestore":   t.testDockerDownLiveRestore,
-	}
+	/*	testFuncs := map[string]testDriverFunc{
+			"testDynamicVolume":           t.testDynamicVolume,
+			"testRemoteForceMount":        t.testRemoteForceMount,
+			"testDriverDown":              t.testDriverDown,
+			"testDriverDownContainerDown": t.testDriverDownContainerDown,
+			"testNodePowerOff":            t.testNodePowerOff,
+			"testPluginDown":              t.testPluginDown,
+			"testNetworkDown":             t.testNetworkDown,
+			"testNetworkPartition":        t.testNetworkPartition,
+			"testDockerDownLiveRestore":   t.testDockerDownLiveRestore,
+		}
 
-	if testName != "" {
-		logrus.Printf("Executing single test %v\n", testName)
-		f, ok := testFuncs[testName]
-		if !ok {
-			return &errors.ErrNotFound{
-				ID:   testName,
-				Type: "Test",
+		if testName != "" {
+			logrus.Infof("Executing single test %v\n", testName)
+			f, ok := testFuncs[testName]
+			if !ok {
+				return &errors.ErrNotFound{
+					ID:   testName,
+					Type: "Test",
+				}
 			}
+
+			if err := f(); err != nil {
+				logrus.Infof("\tTest %v Failed with Error: %v.\n", testName, err)
+				return err
+			}
+			logrus.Infof("\tTest %v Passed.\n", testName)
+			return nil
 		}
 
-		if err := f(); err != nil {
-			logrus.Printf("\tTest %v Failed with Error: %v.\n", testName, err)
-			return err
-		}
-		logrus.Printf("\tTest %v Passed.\n", testName)
-		return nil
-	}
-
-	for n, f := range testFuncs {
-		logrus.Printf("Executing test %v\n", n)
-		if err := f(); err != nil {
-			logrus.Printf("\tTest %v Failed with Error: %v.\n", n, err)
-		} else {
-			logrus.Printf("\tTest %v Passed.\n", n)
-		}
-	}
+		for n, f := range testFuncs {
+			logrus.Infof("Executing test %v\n", n)
+			if err := f(); err != nil {
+				logrus.Infof("\tTest %v Failed with Error: %v.\n", n, err)
+			} else {
+				logrus.Infof("\tTest %v Passed.\n", n)
+			}
+		}*/
 
 	return nil
 }
@@ -492,9 +495,11 @@ func (t *torpedo) run(testName string) error {
 func main() {
 	// TODO: switch to a proper argument parser
 	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %v <scheduler> <volume driver> [testName]\n", os.Args[0])
+		logrus.Infof("Usage: %v <scheduler> <volume driver> [testName]\n", os.Args[0])
 		os.Exit(-1)
 	}
+
+	instID := 1
 
 	testName := ""
 	if len(os.Args) > 3 {
@@ -507,11 +512,11 @@ func main() {
 		logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", os.Args[1], err)
 		os.Exit(-1)
 	} else if v, err := volume.Get(os.Args[2]); err != nil {
-		logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", os.Args[1], err)
+		logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", os.Args[2], err)
 		os.Exit(-1)
 	} else {
 		t := torpedo{
-			instanceID: "1",
+			instanceID: strconv.Itoa(instID),
 			s:          s,
 			v:          v,
 		}
@@ -521,7 +526,7 @@ func main() {
 		}
 	}
 
-	logrus.Printf("Test suite complete with this driver: %v, and this scheduler: %v\n",
+	logrus.Infof("Test suite complete with this driver: %v, and this scheduler: %v\n",
 		os.Args[2],
 		os.Args[1],
 	)

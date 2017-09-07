@@ -18,7 +18,7 @@ BIN :=$(BASE_DIR)/bin
 
 .DEFAULT_GOAL=all
 
-all: torpedo vet lint
+all: vet lint build torpedo
 
 deps:
 	GO15VENDOREXPERIMENT=0 go get -d -v $(PKGS)
@@ -88,7 +88,7 @@ deploy: all
 	docker push $(TORPEDO_IMG)
 
 clean:
-	-rm -rf torpedo
+	-rm -rf bin
 	@echo "Deleting image "$(TORPEDO_IMG)
 	-docker rmi -f $(TORPEDO_IMG)
 	go clean -i $(PKGS)

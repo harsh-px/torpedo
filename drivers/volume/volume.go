@@ -1,17 +1,14 @@
 package volume
 
-import (
-	"github.com/portworx/torpedo/drivers"
-	"github.com/portworx/torpedo/pkg/errors"
-)
+import "github.com/portworx/torpedo/pkg/errors"
 
 // Driver defines an external volume driver interface that must be implemented
 // by any external storage provider that wants to qualify their product with
 // Torpedo.  The functions defined here are meant to be destructive and illustrative
 // of failure scenarious that can happen with an external storage provider.
 type Driver interface {
-	// Driver provides the basic service manipulation routines.
-	drivers.Driver
+	// Init initializes the volume driver under the given scheduler
+	Init(sched string) error
 
 	// String returns the string name of this driver.
 	String() string

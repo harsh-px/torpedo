@@ -5,13 +5,22 @@ import (
 	"github.com/portworx/torpedo/pkg/errors"
 )
 
+// NodeType identifies the type of the cluster node
+type NodeType string
+
 const (
-	// LocalHost will pin a task to the node the task is created on.
-	LocalHost = "localhost"
-	// ExternalHost will pick any other host in the cluster other than the
-	// one the task is created on.
-	ExternalHost = "externalhost"
+	// NodeTypeMaster identifies a cluster node that is a master/manager
+	NodeTypeMaster NodeType = "Master"
+	// NodeTypeWorker identifies a cluster node that is a worker
+	NodeTypeWorker NodeType = "Worker"
 )
+
+// Node encapsulates a node in the cluster
+type Node struct {
+	Name      string
+	Addresses []string
+	Type      NodeType
+}
 
 // Volume specifies the parameters for creating an external volume.
 type Volume struct {
@@ -27,7 +36,7 @@ type App struct {
 	Replicas int
 	Vol      Volume
 	// Nodes in which to run the task. If empty, scheduler will pick the node(s).
-	Nodes []string
+	Nodes []Node
 }
 
 // Context holds the execution context and output values of a test task.
@@ -44,8 +53,11 @@ type Driver interface {
 	// Driver provides the basic service manipulation routines.
 	drivers.Driver
 
+	// String returns the string name of this driver.
+	String() string
+
 	// GetNodes returns an array of all nodes in the cluster.
-	GetNodes() ([]string, error)
+	GetNodes() ([]Node, error)
 
 	// Create creates a task context. Does not start the task.
 	Create(App) (*Context, error)
