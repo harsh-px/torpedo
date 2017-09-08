@@ -4,6 +4,9 @@ import (
 	"github.com/portworx/torpedo/drivers/scheduler"
 	"github.com/portworx/torpedo/pkg/k8sutils"
 	"k8s.io/client-go/pkg/api/v1"
+	"github.com/portworx/torpedo/drivers/scheduler/k8s/spec/factory"
+	"github.com/Sirupsen/logrus"
+	"github.com/pborman/uuid"
 )
 
 // SchedName is the name of the kubernetes scheduler driver implementation
@@ -54,9 +57,28 @@ func (k *k8s) Init() error {
 
 func (k *k8s) Schedule(app scheduler.App) (*scheduler.Context, error) {
 	// Find spec from factory
+	spec, err := factory.Get(app.Key)
+	if err != nil {
+		return nil, err
+	}
 
-	// For all objects of the spec, create them in a loop
-	return nil, nil
+	for _, storage := range spec.Storage() {
+		logrus.Infof("Deploying storage component: %#v", storage)
+	}
+
+	for _, core := range spec.Core(1, app.Name) {
+		logrus.Infof("Deploying core component: %#v", core)
+	}
+
+	ctx := &scheduler.Context{
+		UID: uuid.New(),
+		App: app,
+		// Status: TODO
+		// Stdout: TODO
+		// Stderr: TODO
+	}
+
+	return ctx, nil
 }
 
 func (k *k8s) WaitDone(ctx *scheduler.Context) error {
