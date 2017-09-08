@@ -33,8 +33,8 @@ func (t *torpedo) testDynamicVolume() error {
 	appName := fmt.Sprintf("%s-%s", appID, taskName)
 
 	app := scheduler.App{
-		Key:      appID,
-		Name:     appName,
+		Key:  appID,
+		Name: appName,
 	}
 
 	ctx, err := t.s.Schedule(app)
@@ -48,6 +48,10 @@ func (t *torpedo) testDynamicVolume() error {
 			ctx.Stdout,
 			ctx.Stderr,
 		)
+	}
+
+	if err := t.s.WaitForRunning(ctx); err != nil {
+		return err
 	}
 
 	if err := t.validateVolumes(ctx); err != nil {
@@ -101,39 +105,6 @@ func (t *torpedo) tearDownContext(ctx *scheduler.Context) error {
 	}
 	return nil
 }
-
-/*func (t *torpedo) cleanupAppAndVol(spec scheduler.App, bestEffort bool) error {
-	var e error
-
-	if err := t.s.DestroyByName(spec.Name); err != nil {
-		logrus.Errorf("Failed to destroy spec: %v. Err: %v", spec.Name, err)
-		if !bestEffort {
-			return err
-		}
-		e = err
-	}
-
-	// Get all volumes and ask volume driver to inspect them
-	volumes, err := t.s.GetVolumes(ctx)
-	if err != nil {
-		return &errors.ErrValidateVol{
-			UID:    ctx.UID,
-			Cause: err.Error(),
-		}
-	}
-
-	for _, vol := range volumes {
-		if err := t.v.CleanupVolume(vol); err != nil {
-			logrus.Errorf("Failed to cleanup volume: %v. Err: %v", vol.Name, err)
-			if !bestEffort {
-				return err
-			}
-			e = err
-		}
-	}
-
-	return e
-}*/
 
 // Volume Driver Plugin is down, unavailable - and the client container should
 // not be impacted.

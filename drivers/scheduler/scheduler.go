@@ -26,8 +26,8 @@ type Node struct {
 
 // App encapsulates an application run within a scheduler
 type App struct {
-	Key      string
-	Name     string
+	Key  string
+	Name string
 	// Nodes in which to run the task. If empty, scheduler will pick the node(s).
 	Nodes []Node
 }
@@ -55,8 +55,8 @@ type Driver interface {
 	// Schedule starts a task
 	Schedule(App) (*Context, error)
 
-	// WaitDone waits for task to complete. This is relevant only for tasks that are expected to complete and not perpetual tasks.
-	WaitDone(*Context) error
+	// WaitForRunning waits for task to complete. TODO add WaitOptions and use vendored px sched pkg to implement
+	WaitForRunning(*Context) error
 
 	// Destroy removes a task. It does not delete the volumes of the task.
 	Destroy(*Context) error

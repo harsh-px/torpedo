@@ -1,12 +1,15 @@
 package k8sutils
 
 import (
+	"fmt"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 	storage_v1beta1 "k8s.io/client-go/pkg/apis/storage/v1beta1"
 	"k8s.io/client-go/rest"
+	"log"
+	"time"
 )
 
 const k8sMasterLabelKey = "node-role.kubernetes.io/master"
@@ -51,7 +54,6 @@ func CreateDeployment(deployment *v1beta1.Deployment) (*v1beta1.Deployment, erro
 	return client.AppsV1beta1().Deployments(deployment.Namespace).Create(deployment)
 }
 
-
 // DeleteDeployment deletes the given deployment
 func DeleteDeployment(deployment *v1beta1.Deployment) error {
 	client, err := GetK8sClient()
@@ -60,6 +62,44 @@ func DeleteDeployment(deployment *v1beta1.Deployment) error {
 	}
 
 	return client.AppsV1beta1().Deployments(deployment.Namespace).Delete(deployment.Name, &meta_v1.DeleteOptions{})
+}
+
+// ValidateDeployement validates the given deployment if it's running and healthy
+func ValidateDeployement(deployment *v1beta1.Deployment) error {
+	task := func() error {
+		client, err := GetK8sClient()
+		if err != nil {
+			return err
+		}
+
+		dep, err := client.AppsV1beta1().Deployments(deployment.Namespace).Get(deployment.Name, meta_v1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		if *dep.Spec.Replicas == dep.Status.AvailableReplicas {
+			return &ErrAppNotReady{
+				ID:    dep.Name,
+				Cause: fmt.Sprintf("Expected replicas: %v Available replicas: %v", dep.Spec.Replicas, dep.Status.AvailableReplicas),
+			}
+		}
+
+		if *dep.Spec.Replicas == dep.Status.ReadyReplicas {
+			return &ErrAppNotReady{
+				ID:    dep.Name,
+				Cause: fmt.Sprintf("Expected replicas: %v Ready replicas: %v", dep.Spec.Replicas, dep.Status.ReadyReplicas),
+			}
+		}
+
+		// TODO perform deeper checks with pods
+		return nil
+	}
+
+	if err := doRetryWithTimeout(task, 1*time.Minute, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CreateStorageClass creates the given storage class
@@ -71,7 +111,6 @@ func CreateStorageClass(sc *storage_v1beta1.StorageClass) (*storage_v1beta1.Stor
 
 	return client.StorageV1beta1().StorageClasses().Create(sc)
 }
-
 
 // DeleteStorageClass deletes the given storage class
 func DeleteStorageClass(sc *storage_v1beta1.StorageClass) error {
@@ -103,6 +142,36 @@ func DeletePersistentVolumeClaim(pvc *v1.PersistentVolumeClaim) error {
 	return client.PersistentVolumeClaims(pvc.Namespace).Delete(pvc.Name, &meta_v1.DeleteOptions{})
 }
 
+// ValidatePersistentVolumeClaim validates the given pvc
+func ValidatePersistentVolumeClaim(pvc *v1.PersistentVolumeClaim) error {
+	task := func() error {
+		client, err := GetK8sClient()
+		if err != nil {
+			return err
+		}
+
+		result, err := client.PersistentVolumeClaims(pvc.Namespace).Get(pvc.Name, meta_v1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		if result.Status.Phase == v1.ClaimBound {
+			return nil
+		}
+
+		return &ErrPVCNotReady{
+			ID: result.Name,
+			Cause: fmt.Sprintf("PVC expected status: %v PVC actual status: %v", v1.ClaimBound, result.Status.Phase),
+		}
+	}
+
+	if err := doRetryWithTimeout(task, 1*time.Minute, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // IsNodeMaster returns true if given node is a kubernetes master node
 func IsNodeMaster(node v1.Node) bool {
 	_, ok := node.Labels[k8sMasterLabelKey]
@@ -121,4 +190,39 @@ func loadClientFromServiceAccount() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return k8sClient, nil
+}
+
+func doRetryWithTimeout(task func() error, timeout, timeBeforeRetry time.Duration) error {
+	done := make(chan bool, 1)
+	quit := make(chan bool, 1)
+
+	go func(done, quit chan bool) {
+		for {
+			select {
+			case q := <-quit:
+				if q {
+					log.Printf("Quiting task due to timeout...\n")
+					return
+				}
+
+			default:
+				if err := task(); err == nil {
+					log.Printf("Task succeeded.\n")
+					done <- true
+				} else {
+					log.Printf("Task failing with err: %v\n", err)
+				}
+
+				time.Sleep(timeBeforeRetry)
+			}
+		}
+	}(done, quit)
+
+	select {
+	case <-done:
+		return nil
+	case <-time.After(timeout):
+		quit <- true
+		return ErrTimedOut
+	}
 }

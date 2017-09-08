@@ -124,7 +124,30 @@ func (k *k8s) Schedule(app scheduler.App) (*scheduler.Context, error) {
 	return ctx, nil
 }
 
-func (k *k8s) WaitDone(ctx *scheduler.Context) error {
+func (k *k8s) WaitForRunning(ctx *scheduler.Context) error {
+	spec, err := factory.Get(ctx.App.Key)
+	if err != nil {
+		return err
+	}
+
+	for _, core := range spec.Core(ctx.App.Name) {
+		if obj, ok := core.(*v1beta1.Deployment); ok {
+			err := k8sutils.ValidateDeployement(obj)
+			if err != nil {
+				return &ErrFailedToValidateApp{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("Failed to validate Deployment: %v. Err: %v", obj.Name, err),
+				}
+			}
+			log.Printf("Validated deployment: %v", obj.Name)
+		} else {
+			return &ErrFailedToValidateApp{
+				App:   ctx.App,
+				Cause: fmt.Sprintf("Failed to validate unsupported core component: %#v.", core),
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -160,6 +183,30 @@ func (k *k8s) GetVolumes(ctx *scheduler.Context) ([]string, error) {
 }
 
 func (k *k8s) InspectVolumes(ctx *scheduler.Context) error {
+	spec, err := factory.Get(ctx.App.Key)
+	if err != nil {
+		return err
+	}
+
+	for _, storage := range spec.Storage() {
+		if obj, ok := storage.(*storage_v1beta1.StorageClass); ok {
+			log.Printf("TODO Validated storage class: %v", obj.Name)
+		} else if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
+			if err := k8sutils.ValidatePersistentVolumeClaim(obj); err != nil {
+				return &ErrFailedToValidateStorage{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("Failed to validate PVC: %v. Err: %v", obj.Name, err),
+				}
+			}
+			log.Printf("Validated PVC: %v", obj.Name)
+		} else {
+			return &ErrFailedToValidateStorage{
+				App:   ctx.App,
+				Cause: fmt.Sprintf("Failed to validate unsupported storage component: %#v.", storage),
+			}
+		}
+	}
+
 	return nil
 }
 

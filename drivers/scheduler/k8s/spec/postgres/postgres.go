@@ -22,7 +22,7 @@ func (p *postgres) Core(name string) []interface{} {
 	var coreComponents []interface{}
 	deployment := &v1beta1.Deployment{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: name,
+			Name:      name,
 			Namespace: v1.NamespaceDefault,
 		},
 		Spec: v1beta1.DeploymentSpec{
