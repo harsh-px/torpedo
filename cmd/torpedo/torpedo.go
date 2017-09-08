@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/portworx/torpedo/drivers/volume"
 	_ "github.com/portworx/torpedo/drivers/volume/portworx"
 	"github.com/portworx/torpedo/pkg/errors"
-	"log"
 )
 
 type torpedo struct {
@@ -29,7 +29,10 @@ type testDriverFunc func() error
 func (t *torpedo) testDynamicVolume() error {
 	taskName := "testdynamicvolume"
 
-	appID := "postgres" // TODO: instead of picking an app here, all apps in the scheduler factory should be run here.
+	// TODO: also pass t.instanceID to scheduler so we can have multiple torpedo instances running
+	// TODO: instead of picking an app here, all apps in the scheduler factory should be run here
+
+	appID := "postgres"
 	appName := fmt.Sprintf("%s-%s", appID, taskName)
 
 	app := scheduler.App{
@@ -75,7 +78,7 @@ func (t *torpedo) validateVolumes(ctx *scheduler.Context) error {
 	}
 
 	// Get all volumes and ask volume driver to inspect them
-	volumes, err := t.s.GetVolumes(ctx)
+	volumes, err := t.s.GetVolumeParameters(ctx)
 	if err != nil {
 		return &errors.ErrValidateVol{
 			ID:    ctx.UID,

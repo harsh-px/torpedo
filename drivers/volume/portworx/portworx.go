@@ -15,6 +15,7 @@ import (
 	"github.com/libopenstorage/openstorage/volume"
 	"github.com/portworx/torpedo/drivers/scheduler"
 	torpedovolume "github.com/portworx/torpedo/drivers/volume"
+	"google.golang.org/genproto/googleapis/devtools/source/v1"
 )
 
 var (
@@ -141,7 +142,147 @@ func (d *portworx) CleanupVolume(name string) error {
 	return nil
 }
 
-func (d *portworx) InspectVolume(name string) error {
+func (d *portworx) InspectVolume(name string, params map[string]string) error {
+	log.Printf("[debug] Inspecting volume: %v", name)
+
+	vols, err := d.volDriver.Inspect([]string{name})
+	if err != nil {
+		return &ErrFailedToInspectVolme{
+			ID:    name,
+			Cause: fmt.Sprintf("Volume inspect returned err: %v", err),
+		}
+	}
+
+	if len(vols) != 1 {
+		return &ErrFailedToInspectVolme{
+			ID:    name,
+			Cause: fmt.Sprintf("Volume inspect result has invalid length. Expected:1 Actual:%v", len(vols)),
+		}
+	}
+
+	vol := vols[0]
+
+	// Status
+	if vol.Status != api.VolumeStatus_VOLUME_STATUS_UP {
+		return &ErrFailedToInspectVolme{
+			ID: name,
+			Cause: fmt.Sprintf("Volume has invalid status. Expected:%v Actual:%v",
+				api.VolumeStatus_VOLUME_STATUS_UP, vol.Status),
+		}
+	}
+
+	// State
+	if vol.State == api.VolumeState_VOLUME_STATE_ERROR || vol.State == api.VolumeState_VOLUME_STATE_DELETED {
+		return &ErrFailedToInspectVolme{
+			ID: name,
+			Cause: fmt.Sprintf("Volume has invalid state. Actual:%v", vol.State),
+		}
+	}
+
+	// Params/Options
+	for k, v := range params {
+		switch k {
+		case api.SpecNodes:
+			inputNodes := strings.Split(v, ",")
+			if vol.Spec.
+		case api.SpecParent:
+			//source.Parent = v
+		case api.SpecEphemeral:
+		case api.SpecSize:
+			/*if size, err := units.Parse(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.Size = uint64(size)
+			}*/
+		case api.SpecFilesystem:
+			/*if value, err := api.FSTypeSimpleValueOf(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.Format = value
+			}*/
+		case api.SpecBlockSize:
+			/*if blockSize, err := units.Parse(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.BlockSize = blockSize
+			}*/
+		case api.SpecHaLevel:
+/*			haLevel, _ := strconv.ParseInt(v, 10, 64)
+			spec.HaLevel = haLevel*/
+			// TODO vendor latest openstorage
+			/*		case api.SpecPriorityAlias:
+			cos, err := d.cosLevel(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			spec.Cos = cos*/
+		case api.SpecSnapshotInterval:
+/*			snapshotInterval, _ := strconv.ParseUint(v, 10, 32)
+			spec.SnapshotInterval = uint32(snapshotInterval)*/
+		case api.SpecAggregationLevel:
+			/*
+			if v == api.SpecAutoAggregationValue {
+				spec.AggregationLevel = api.AutoAggregation
+			} else {
+				aggregationLevel, _ := strconv.ParseUint(v, 10, 32)
+				spec.AggregationLevel = uint32(aggregationLevel)
+			}
+			*/
+		case api.SpecShared:
+			/*
+			if shared, err := strconv.ParseBool(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.Shared = shared
+			}
+			*/
+		case api.SpecSticky:
+			/*
+			if sticky, err := strconv.ParseBool(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.Sticky = sticky
+			}
+			*/
+		case api.SpecGroup:
+			/*
+			spec.Group = &api.Group{Id: v}
+			*/
+		case api.SpecGroupEnforce:
+			/*
+			if groupEnforced, err := strconv.ParseBool(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				spec.GroupEnforced = groupEnforced
+			}
+			*/
+			// TODO vendor latest openstorage
+		/*
+		case api.SpecLabels:
+			if labels, err := parser.LabelsFromString(v); err != nil {
+				return nil, nil, nil, err
+			} else {
+				for k, v := range labels {
+					locator.VolumeLabels[k] = v
+				}
+			}
+		*/
+			// TODO vendor latest openstorage
+			/*
+			case api.SpecIoProfile:
+				if ioProfile, err := api.IoProfileSimpleValueOf(v); err != nil {
+					return nil, nil, nil, err
+				} else {
+					spec.IoProfile = ioProfile
+				}
+			*/
+		default:
+			log.Printf("Warning: Encountered unhandled custom param: %v -> %v\n", k, v)
+		}
+
+	}
+
+	log.Printf("Successfully inspect volume: %v (%v)", vol.Locator.Name, name)
 	return nil
 }
 

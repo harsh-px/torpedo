@@ -22,8 +22,8 @@ type Driver interface {
 	// used during orchestration simulations.
 	CleanupVolume(name string) error
 
-	// InspectVolume inspects a storage volume.
-	InspectVolume(name string) error
+	// InspectVolume inspects a storage volume. params are the custom volume options passed when creating the volume.
+	InspectVolume(name string, params map[string]string) error
 
 	// Stop must cause the volume driver to exit or get killed on a given node.
 	StopDriver(ip string) error

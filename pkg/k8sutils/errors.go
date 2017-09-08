@@ -58,4 +58,3 @@ type ErrPVCNotReady struct {
 func (e *ErrPVCNotReady) Error() string {
 	return fmt.Sprintf("PVC %v is not ready yet. Cause: %v", e.ID, e.Cause)
 }
-

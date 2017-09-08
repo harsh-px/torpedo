@@ -13,6 +13,7 @@ import (
 )
 
 const k8sMasterLabelKey = "node-role.kubernetes.io/master"
+const k8sPVCStorageClassKey = "volume.beta.kubernetes.io/storage-class"
 
 // GetK8sClient instantiates a k8s client
 func GetK8sClient() (*kubernetes.Clientset, error) {
@@ -160,7 +161,7 @@ func ValidatePersistentVolumeClaim(pvc *v1.PersistentVolumeClaim) error {
 		}
 
 		return &ErrPVCNotReady{
-			ID: result.Name,
+			ID:    result.Name,
 			Cause: fmt.Sprintf("PVC expected status: %v PVC actual status: %v", v1.ClaimBound, result.Status.Phase),
 		}
 	}
@@ -170,6 +171,58 @@ func ValidatePersistentVolumeClaim(pvc *v1.PersistentVolumeClaim) error {
 	}
 
 	return nil
+}
+
+// GetVolumeForPersistentVolumeClaim returns the back volume for the given PVC
+func GetVolumeForPersistentVolumeClaim(pvc *v1.PersistentVolumeClaim) (string, error) {
+	client, err := GetK8sClient()
+	if err != nil {
+		return "", err
+	}
+
+	result, err := client.PersistentVolumeClaims(pvc.Namespace).Get(pvc.Name, meta_v1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return result.Spec.VolumeName, nil
+}
+
+// GetPersistentVolumeClaimParams fetches custom parameters for the given PVC
+func GetPersistentVolumeClaimParams(pvc *v1.PersistentVolumeClaim) (map[string]string, error) {
+	client, err := GetK8sClient()
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := client.PersistentVolumeClaims(pvc.Namespace).Get(pvc.Name, meta_v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var params map[string]string
+
+	storageResource, ok := result.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)]
+	if !ok {
+		return nil, fmt.Errorf("failed to get storage resource for pvc: %v", result.Name)
+	}
+
+	params["size"] = storageResource.String()
+	scName, ok := result.Annotations[k8sPVCStorageClassKey]
+	if !ok {
+		return nil, fmt.Errorf("failed to get storage class for pvc: %v", result.Name)
+	}
+
+	sc, err := client.StorageV1beta1().StorageClasses().Get(scName, meta_v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for key, value := range sc.Parameters {
+		params[key] = value
+	}
+
+	return params, nil
 }
 
 // IsNodeMaster returns true if given node is a kubernetes master node

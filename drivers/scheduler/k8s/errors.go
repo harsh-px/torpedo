@@ -65,3 +65,27 @@ type ErrFailedToValidateApp struct {
 func (e *ErrFailedToValidateApp) Error() string {
 	return fmt.Sprintf("Failed to validate app: %v due to err: %v", e.App.Name, e.Cause)
 }
+
+// ErrFailedToGetVolumesForApp error type for failing to get an app's volumes
+type ErrFailedToGetVolumesForApp struct {
+	// App is the app that failed to destroy
+	App scheduler.App
+	// Cause is the underlying cause of the error
+	Cause string
+}
+
+func (e *ErrFailedToGetVolumesForApp) Error() string {
+	return fmt.Sprintf("Failed to get volumes for app: %v due to err: %v", e.App.Name, e.Cause)
+}
+
+// ErrFailedToGetVolumesParameters error type for failing to get an app's volume paramters
+type ErrFailedToGetVolumesParameters struct {
+	// App is the app for which we failed to get volume parameters
+	App scheduler.App
+	// Cause is the underlying cause of the error
+	Cause string
+}
+
+func (e *ErrFailedToGetVolumesParameters) Error() string {
+	return fmt.Sprintf("Failed to get volume parameters for app: %v due to err: %v", e.App.Name, e.Cause)
+}

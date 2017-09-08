@@ -61,8 +61,11 @@ type Driver interface {
 	// Destroy removes a task. It does not delete the volumes of the task.
 	Destroy(*Context) error
 
-	// Returns list of volume IDs using by given context
+	// GetVolumes Returns list of volume IDs using by given context
 	GetVolumes(*Context) ([]string, error)
+
+	// GetVolumeParameters Returns list of maps, each item being a volume and it's options
+	GetVolumeParameters(*Context) ([]map[string]map[string]string, error)
 
 	// InspectVolumes inspects a storage volume.
 	InspectVolumes(*Context) error

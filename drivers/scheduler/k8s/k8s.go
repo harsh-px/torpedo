@@ -179,7 +179,67 @@ func (k *k8s) Destroy(ctx *scheduler.Context) error {
 }
 
 func (k *k8s) GetVolumes(ctx *scheduler.Context) ([]string, error) {
-	return nil, nil
+	spec, err := factory.Get(ctx.App.Key)
+	if err != nil {
+		return nil, &ErrFailedToGetVolumesForApp{
+			App:   ctx.App,
+			Cause: fmt.Sprintf("Failed to get spec for app: %v. Err: %v",ctx.App.Key, err),
+		}
+	}
+
+	var volumes[]string
+	for _, storage := range spec.Storage() {
+		if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
+			vol, err := k8sutils.GetVolumeForPersistentVolumeClaim(obj)
+			if err != nil {
+				return nil, &ErrFailedToGetVolumesForApp{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("Failed to get volume for PVC: %v. Err: %v", obj.Name, err),
+				}
+			}
+
+			volumes = append(volumes, vol)
+		}
+	}
+
+	return volumes, nil
+}
+
+func (k *k8s) GetVolumeParameters(ctx *scheduler.Context) ([]map[string]map[string]string, error) {
+	spec, err := factory.Get(ctx.App.Key)
+	if err != nil {
+		return nil, &ErrFailedToGetVolumesParameters{
+			App:   ctx.App,
+			Cause: fmt.Sprintf("failed to get spec for app: %v. Err: %v",ctx.App.Key, err),
+		}
+	}
+
+	var result []map[string]map[string]string
+	for _, storage := range spec.Storage() {
+		if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
+			vol, err := k8sutils.GetVolumeForPersistentVolumeClaim(obj)
+			if err != nil {
+				return nil, &ErrFailedToGetVolumesParameters{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("failed to get volume for PVC: %v. Err: %v", obj.Name, err),
+				}
+			}
+
+			params, err := k8sutils.GetPersistentVolumeClaimParams(obj)
+			if err != nil {
+				return nil, &ErrFailedToGetVolumesParameters{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("failed to get params for volume: %v. Err: %v", obj.Name, err),
+				}
+			}
+
+			result = append(result, map[string]map[string]string{
+				vol: params,
+			})
+		}
+	}
+
+	return result, nil
 }
 
 func (k *k8s) InspectVolumes(ctx *scheduler.Context) error {
