@@ -9,6 +9,8 @@ import (
 	"github.com/portworx/torpedo/drivers/scheduler"
 	"github.com/portworx/torpedo/drivers/volume"
 	"github.com/portworx/torpedo/pkg/errors"
+	_ "github.com/portworx/torpedo/drivers/volume/portworx"
+	_ "github.com/portworx/torpedo/drivers/scheduler/k8s"
 )
 
 type torpedo struct {
