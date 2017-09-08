@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"path"
@@ -17,20 +18,22 @@ import (
 // A REST endpoint is accessed with the following convention:
 // base_url/<version>/<resource>/[<instance>]
 type Request struct {
-	client   *http.Client
-	version  string
-	verb     string
-	path     string
-	base     *url.URL
-	params   url.Values
-	headers  http.Header
-	resource string
-	instance string
-	err      error
-	body     []byte
-	req      *http.Request
-	resp     *http.Response
-	timeout  time.Duration
+	client      *http.Client
+	version     string
+	verb        string
+	path        string
+	base        *url.URL
+	params      url.Values
+	headers     http.Header
+	resource    string
+	instance    string
+	err         error
+	body        []byte
+	req         *http.Request
+	resp        *http.Response
+	timeout     time.Duration
+	authstring  string
+	accesstoken string
 }
 
 // Response is a representation of HTTP response received from the server.
@@ -48,14 +51,17 @@ type Status struct {
 }
 
 // NewRequest instance
-func NewRequest(client *http.Client, base *url.URL, verb string, version string) *Request {
-	return &Request{
-		client:  client,
-		verb:    verb,
-		base:    base,
-		path:    base.Path,
-		version: version,
+func NewRequest(client *http.Client, base *url.URL, verb string, version string, authstring, userAgent string) *Request {
+	r := &Request{
+		client:     client,
+		verb:       verb,
+		base:       base,
+		path:       base.Path,
+		version:    version,
+		authstring: authstring,
 	}
+	r.SetHeader("User-Agent", userAgent)
+	return r
 }
 
 func checkExists(mustExist string, before string) error {
@@ -251,8 +257,19 @@ func (r *Request) Do() *Response {
 	if r.headers == nil {
 		r.headers = http.Header{}
 	}
+
 	req.Header = r.headers
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Date", time.Now().String())
+
+	if len(r.authstring) > 0 {
+		req.Header.Set("Authorization", "Basic "+r.authstring)
+	}
+
+	if len(r.accesstoken) > 0 {
+		req.Header.Set("Access-Token", r.accesstoken)
+	}
+
 	resp, err = r.client.Do(req)
 	if err != nil {
 		return &Response{err: err}
@@ -301,4 +318,15 @@ func (r Response) FormatError() error {
 		return fmt.Errorf("Error: %v", r.err)
 	}
 	return fmt.Errorf("HTTP-%d: %s", r.statusCode, string(r.body))
+}
+
+func digest(method string, path string) string {
+	now := time.Now().String()
+
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	nonce := r1.Intn(10)
+
+	return method + "+" + path + "+" + now + "+" + strconv.Itoa(nonce)
 }

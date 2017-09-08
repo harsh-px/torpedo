@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/portworx/torpedo/drivers/scheduler"
 	_ "github.com/portworx/torpedo/drivers/scheduler/k8s"
 	"github.com/portworx/torpedo/drivers/volume"
 	_ "github.com/portworx/torpedo/drivers/volume/portworx"
 	"github.com/portworx/torpedo/pkg/errors"
+	"time"
 )
 
 type torpedo struct {
@@ -29,11 +29,9 @@ type testDriverFunc func() error
 func (t *torpedo) testDynamicVolume() error {
 	taskName := "testdynamicvolume"
 
-	// TODO: also pass t.instanceID to scheduler so we can have multiple torpedo instances running
 	// TODO: instead of picking an app here, all apps in the scheduler factory should be run here
-
 	appID := "postgres"
-	appName := fmt.Sprintf("%s-%s", appID, taskName)
+	appName := fmt.Sprintf("%s-%s-%s", appID, taskName, t.instanceID)
 
 	app := scheduler.App{
 		Key:  appID,
@@ -53,11 +51,11 @@ func (t *torpedo) testDynamicVolume() error {
 		)
 	}
 
-	if err := t.s.WaitForRunning(ctx); err != nil {
+	if err := t.validateVolumes(ctx); err != nil {
 		return err
 	}
 
-	if err := t.validateVolumes(ctx); err != nil {
+	if err := t.s.WaitForRunning(ctx); err != nil {
 		return err
 	}
 
@@ -77,7 +75,7 @@ func (t *torpedo) validateVolumes(ctx *scheduler.Context) error {
 		}
 	}
 
-	// Get all volumes and ask volume driver to inspect them
+	// Get all volumes with their params and ask volume driver to inspect them
 	volumes, err := t.s.GetVolumeParameters(ctx)
 	if err != nil {
 		return &errors.ErrValidateVol{
@@ -86,8 +84,8 @@ func (t *torpedo) validateVolumes(ctx *scheduler.Context) error {
 		}
 	}
 
-	for _, vol := range volumes {
-		if err := t.v.InspectVolume(vol); err != nil {
+	for vol, params := range volumes {
+		if err := t.v.InspectVolume(vol, params); err != nil {
 			return &errors.ErrValidateVol{
 				ID:    ctx.UID,
 				Cause: err.Error(),
@@ -447,14 +445,14 @@ func (t *torpedo) run(testName string) error {
 	// Add new test functions here.
 	testFuncs := map[string]testDriverFunc{
 		"testDynamicVolume":           t.testDynamicVolume,
-		"testRemoteForceMount":        t.testRemoteForceMount,
+/*		"testRemoteForceMount":        t.testRemoteForceMount,
 		"testDriverDown":              t.testDriverDown,
 		"testDriverDownContainerDown": t.testDriverDownContainerDown,
 		"testNodePowerOff":            t.testNodePowerOff,
 		"testPluginDown":              t.testPluginDown,
 		"testNetworkDown":             t.testNetworkDown,
 		"testNetworkPartition":        t.testNetworkPartition,
-		"testDockerDownLiveRestore":   t.testDockerDownLiveRestore,
+		"testDockerDownLiveRestore":   t.testDockerDownLiveRestore,*/
 	}
 
 	if testName != "" {
@@ -494,8 +492,6 @@ func main() {
 		os.Exit(-1)
 	}
 
-	instID := 1
-
 	testName := ""
 	if len(os.Args) > 3 {
 		testName = os.Args[3]
@@ -511,7 +507,7 @@ func main() {
 		os.Exit(-1)
 	} else {
 		t := torpedo{
-			instanceID: strconv.Itoa(instID),
+			instanceID: time.Now().Format("2006-01-02-15h04m05s"),
 			s:          s,
 			v:          v,
 		}

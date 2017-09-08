@@ -183,11 +183,11 @@ func (k *k8s) GetVolumes(ctx *scheduler.Context) ([]string, error) {
 	if err != nil {
 		return nil, &ErrFailedToGetVolumesForApp{
 			App:   ctx.App,
-			Cause: fmt.Sprintf("Failed to get spec for app: %v. Err: %v",ctx.App.Key, err),
+			Cause: fmt.Sprintf("Failed to get spec for app: %v. Err: %v", ctx.App.Key, err),
 		}
 	}
 
-	var volumes[]string
+	var volumes []string
 	for _, storage := range spec.Storage() {
 		if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
 			vol, err := k8sutils.GetVolumeForPersistentVolumeClaim(obj)
@@ -205,16 +205,17 @@ func (k *k8s) GetVolumes(ctx *scheduler.Context) ([]string, error) {
 	return volumes, nil
 }
 
-func (k *k8s) GetVolumeParameters(ctx *scheduler.Context) ([]map[string]map[string]string, error) {
+func (k *k8s) GetVolumeParameters(ctx *scheduler.Context) (map[string]map[string]string, error) {
 	spec, err := factory.Get(ctx.App.Key)
 	if err != nil {
 		return nil, &ErrFailedToGetVolumesParameters{
 			App:   ctx.App,
-			Cause: fmt.Sprintf("failed to get spec for app: %v. Err: %v",ctx.App.Key, err),
+			Cause: fmt.Sprintf("failed to get spec for app: %v. Err: %v", ctx.App.Key, err),
 		}
 	}
 
-	var result []map[string]map[string]string
+	result := make(map[string]map[string]string)
+
 	for _, storage := range spec.Storage() {
 		if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
 			vol, err := k8sutils.GetVolumeForPersistentVolumeClaim(obj)
@@ -232,10 +233,7 @@ func (k *k8s) GetVolumeParameters(ctx *scheduler.Context) ([]map[string]map[stri
 					Cause: fmt.Sprintf("failed to get params for volume: %v. Err: %v", obj.Name, err),
 				}
 			}
-
-			result = append(result, map[string]map[string]string{
-				vol: params,
-			})
+			result[vol] = params
 		}
 	}
 
@@ -250,7 +248,13 @@ func (k *k8s) InspectVolumes(ctx *scheduler.Context) error {
 
 	for _, storage := range spec.Storage() {
 		if obj, ok := storage.(*storage_v1beta1.StorageClass); ok {
-			log.Printf("TODO Validated storage class: %v", obj.Name)
+			if err := k8sutils.ValidateStorageClass(obj); err != nil {
+				return &ErrFailedToValidateStorage{
+					App:   ctx.App,
+					Cause: fmt.Sprintf("Failed to validate StorageClass: %v. Err: %v", obj.Name, err),
+				}
+			}
+			log.Printf("Validated storage class: %v", obj.Name)
 		} else if obj, ok := storage.(*v1.PersistentVolumeClaim); ok {
 			if err := k8sutils.ValidatePersistentVolumeClaim(obj); err != nil {
 				return &ErrFailedToValidateStorage{

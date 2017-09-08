@@ -13,3 +13,11 @@ type ErrFailedToInspectVolme struct {
 func (e *ErrFailedToInspectVolme) Error() string {
 	return fmt.Sprintf("Failed to inspect volume: %v due to err: %v", e.ID, e.Cause)
 }
+
+func errFailedToInspectVolme(ID, key string, expected, actual interface{}) error {
+	return &ErrFailedToInspectVolme{
+		ID: ID,
+		Cause: fmt.Sprintf("volume has invalid %v value. Expected:%#v Actual:%#v",
+			key, expected, actual),
+	}
+}
