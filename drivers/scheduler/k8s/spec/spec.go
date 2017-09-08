@@ -7,5 +7,5 @@ type AppSpec interface {
 	// Core
 	Core(replicas int32, name string) []interface{}
 	// Storage
-	Storage()[]interface{}
+	Storage() []interface{}
 }

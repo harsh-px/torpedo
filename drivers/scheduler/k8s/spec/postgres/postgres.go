@@ -1,4 +1,4 @@
-package spec
+package postgres
 
 import (
 	"fmt"
@@ -106,7 +106,7 @@ func (p *postgres) Core(replicas int32, name string) []interface{} {
 func (p *postgres) Storage() []interface{} {
 	var storageComponents []interface{}
 
-	sc := storage_v1beta1.StorageClass{
+	sc := &storage_v1beta1.StorageClass{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "postgres-sc-pxd",
 		},
@@ -119,7 +119,7 @@ func (p *postgres) Storage() []interface{} {
 
 	storageComponents = append(storageComponents, sc)
 
-	pvc := v1.PersistentVolumeClaim{
+	pvc := &v1.PersistentVolumeClaim{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "postgredb",
 			Annotations: map[string]string{

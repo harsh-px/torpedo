@@ -1,8 +1,9 @@
 package volume
 
 import (
+	"log"
+
 	"github.com/portworx/torpedo/pkg/errors"
-	"github.com/Sirupsen/logrus"
 )
 
 // Driver defines an external volume driver interface that must be implemented
@@ -40,7 +41,7 @@ var (
 
 // Register registers the given volume driver
 func Register(name string, d Driver) error {
-	logrus.Debugf("Registering volume driver: %v", name)
+	log.Printf("Registering volume driver: %v\n", name)
 	volDrivers[name] = d
 	return nil
 }

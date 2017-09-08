@@ -2,12 +2,12 @@ package portworx
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	dockerclient "github.com/fsouza/go-dockerclient"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/libopenstorage/openstorage/api"
 	clusterclient "github.com/libopenstorage/openstorage/api/client/cluster"
 	volumeclient "github.com/libopenstorage/openstorage/api/client/volume"
@@ -36,17 +36,14 @@ func (d *portworx) String() string {
 }
 
 func (d *portworx) Init(sched string) error {
-	logrus.Infof("Using the Portworx volume driver under scheduler: %v", sched)
+	log.Printf("Using the Portworx volume driver under scheduler: %v\n", sched)
 	var err error
 	d.schedDriver, err = scheduler.Get(sched)
 	if err != nil {
 		return err
 	}
 
-	nodes, err := d.schedDriver.GetNodes()
-	if err != nil {
-		return err
-	}
+	nodes := d.schedDriver.GetNodes()
 
 	var endpoint string
 	for _, n := range nodes {
@@ -60,7 +57,7 @@ func (d *portworx) Init(sched string) error {
 		return fmt.Errorf("failed to get endpoint for portworx volume driver")
 	}
 
-	logrus.Infof("Using %v as endpoint for portworx volume driver", endpoint)
+	log.Printf("Using %v as endpoint for portworx volume driver\n", endpoint)
 	clnt, err := clusterclient.NewClusterClient("http://"+endpoint+":9001", "v1")
 	if err != nil {
 		return err
@@ -78,9 +75,9 @@ func (d *portworx) Init(sched string) error {
 		return err
 	}
 
-	logrus.Infof("The following Portworx nodes are in the cluster:\n")
+	log.Printf("The following Portworx nodes are in the cluster:\n")
 	for _, n := range cluster.Nodes {
-		logrus.Infof(
+		log.Printf(
 			"\tNode UID: %v\tNode IP: %v\tNode Status: %v\n",
 			n.Id,
 			n.DataIp,
@@ -110,7 +107,7 @@ func (d *portworx) CleanupVolume(name string) error {
 						path,
 						err,
 					)
-					logrus.Printf("%v", err)
+					log.Printf("%v", err)
 					return err
 				}
 			}
@@ -121,7 +118,7 @@ func (d *portworx) CleanupVolume(name string) error {
 					v.Id,
 					err,
 				)
-				logrus.Printf("%v", err)
+				log.Printf("%v", err)
 				return err
 			}
 
@@ -131,11 +128,11 @@ func (d *portworx) CleanupVolume(name string) error {
 					v.Id,
 					err,
 				)
-				logrus.Printf("%v", err)
+				log.Printf("%v", err)
 				return err
 			}
 
-			logrus.Printf("Succesfully removed Portworx volume %v\n", name)
+			log.Printf("Succesfully removed Portworx volume %v\n", name)
 
 			return nil
 		}
@@ -187,7 +184,7 @@ func (d *portworx) StopDriver(ip string) error {
 			}
 
 			d.hostConfig = info.HostConfig
-			logrus.Printf("Stopping Portworx container with UID: %v\n", c.ID)
+			log.Printf("Stopping Portworx container with UID: %v\n", c.ID)
 			if err = docker.StopContainer(c.ID, 0); err != nil {
 				return err
 			}
@@ -252,7 +249,7 @@ func (d *portworx) StartDriver(ip string) error {
 				)
 			}
 
-			logrus.Printf("Starting Portworx container with UID: %v\n", c.ID)
+			log.Printf("Starting Portworx container with UID: %v\n", c.ID)
 			if err = docker.StartContainer(c.ID, d.hostConfig); err != nil {
 				return err
 			}
@@ -261,7 +258,7 @@ func (d *portworx) StartDriver(ip string) error {
 		}
 	}
 
-	logrus.Printf("Could not fine the Portworx container.\n")
+	log.Printf("Could not fine the Portworx container.\n")
 	return fmt.Errorf("could not find the Portworx container on %v", ip)
 }
 
