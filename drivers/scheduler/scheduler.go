@@ -3,6 +3,7 @@ package scheduler
 import (
 	"github.com/portworx/torpedo/drivers"
 	"github.com/portworx/torpedo/pkg/errors"
+	"github.com/Sirupsen/logrus"
 )
 
 // NodeType identifies the type of the cluster node
@@ -76,6 +77,7 @@ var (
 
 // Register registers the given scheduler driver
 func Register(name string, d Driver) error {
+	logrus.Debugf("Registering sched driver: %v", name)
 	schedulers[name] = d
 	return nil
 }
