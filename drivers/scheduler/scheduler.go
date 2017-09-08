@@ -28,7 +28,6 @@ type Node struct {
 type App struct {
 	Key      string
 	Name     string
-	Replicas int
 	// Nodes in which to run the task. If empty, scheduler will pick the node(s).
 	Nodes []Node
 }

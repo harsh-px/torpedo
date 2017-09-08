@@ -27,15 +27,14 @@ type testDriverFunc func() error
 // in the inline format as size=x,repl=x,compress=x,name=foo.
 // This test will fail if the storage driver is not able to parse the size correctly.
 func (t *torpedo) testDynamicVolume() error {
-	taskName := "testDynamicVolume"
+	taskName := "testdynamicvolume"
 
-	appID := "postgres" // TODO: randomly pick appID from repo of apps the sched impl might have.
+	appID := "postgres" // TODO: instead of picking an app here, all apps in the scheduler factory should be run here.
 	appName := fmt.Sprintf("%s-%s", appID, taskName)
 
 	app := scheduler.App{
 		Key:      appID,
 		Name:     appName,
-		Replicas: 1,
 	}
 
 	ctx, err := t.s.Schedule(app)

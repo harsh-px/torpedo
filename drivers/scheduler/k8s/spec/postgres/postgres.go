@@ -18,11 +18,12 @@ func (p *postgres) ID() string {
 	return "postgres"
 }
 
-func (p *postgres) Core(replicas int32, name string) []interface{} {
+func (p *postgres) Core(name string) []interface{} {
 	var coreComponents []interface{}
 	deployment := &v1beta1.Deployment{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: name,
+			Namespace: v1.NamespaceDefault,
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Strategy: v1beta1.DeploymentStrategy{
@@ -38,7 +39,7 @@ func (p *postgres) Core(replicas int32, name string) []interface{} {
 					},
 				},
 			},
-			Replicas: int32Ptr(replicas),
+			Replicas: int32Ptr(1),
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{
@@ -86,7 +87,7 @@ func (p *postgres) Core(replicas int32, name string) []interface{} {
 					},
 					Volumes: []v1.Volume{
 						{
-							Name: "",
+							Name: "postgredb",
 							VolumeSource: v1.VolumeSource{
 								PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
 									ClaimName: "postgredb",
@@ -110,7 +111,7 @@ func (p *postgres) Storage() []interface{} {
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "postgres-sc-pxd",
 		},
-		Provisioner: " kubernetes.io/portworx-volume",
+		Provisioner: "kubernetes.io/portworx-volume",
 		Parameters: map[string]string{
 			"repl":       "3",
 			"io_profile": "db",
@@ -125,6 +126,7 @@ func (p *postgres) Storage() []interface{} {
 			Annotations: map[string]string{
 				"volume.beta.kubernetes.io/storage-class": "postgres-sc-pxd",
 			},
+			Namespace: v1.NamespaceDefault,
 		},
 		Spec: v1.PersistentVolumeClaimSpec{
 			AccessModes: []v1.PersistentVolumeAccessMode{

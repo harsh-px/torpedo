@@ -95,7 +95,7 @@ func (k *k8s) Schedule(app scheduler.App) (*scheduler.Context, error) {
 		}
 	}
 
-	for _, core := range spec.Core(1, app.Name) {
+	for _, core := range spec.Core(app.Name) {
 		if obj, ok := core.(*v1beta1.Deployment); ok {
 			dep, err := k8sutils.CreateDeployment(obj)
 			if err != nil {
@@ -134,7 +134,7 @@ func (k *k8s) Destroy(ctx *scheduler.Context) error {
 		return err
 	}
 
-	for _, core := range spec.Core(1, ctx.App.Name) {
+	for _, core := range spec.Core(ctx.App.Name) {
 		if obj, ok := core.(*v1beta1.Deployment); ok {
 			err := k8sutils.DeleteDeployment(obj)
 			if err != nil {

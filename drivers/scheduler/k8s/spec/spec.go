@@ -5,7 +5,7 @@ type AppSpec interface {
 	// UID
 	ID() string
 	// Core
-	Core(replicas int32, name string) []interface{}
+	Core(name string) []interface{}
 	// Storage
 	Storage() []interface{}
 }
