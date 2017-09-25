@@ -82,6 +82,8 @@ To deploy Torpedo image in your docker repository:
 
 Make sure you change the environment variables above to match your docker repository.
 
+To build Torpedo using a docker build container: `make docker-build`
+
 ### Run
 
 #### Pre-requisites:

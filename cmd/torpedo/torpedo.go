@@ -102,8 +102,8 @@ func (t *torpedo) testDriverDown() error {
 			}
 		}
 
-		// Sleep for apps to get going...
-		time.Sleep(40 * time.Second)
+		// Sleep for storage to go down
+		time.Sleep(10 * time.Second)
 
 		logrus.Infof("[Test: %v] Re-starting volume driver on app nodes", taskName)
 		for _, n := range appNodes {
@@ -170,8 +170,8 @@ func (t *torpedo) testDriverDownAppDown() error {
 			}
 		}
 
-		// Sleep for apps to get going...
-		time.Sleep(40 * time.Second)
+		// Sleep for storage to go down
+		time.Sleep(10 * time.Second)
 
 		logrus.Infof("[Test: %v] Destroying application: %v", taskName, ctx.App.Key)
 		if err := t.s.Destroy(ctx); err != nil {
