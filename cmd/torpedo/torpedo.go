@@ -656,7 +656,7 @@ func fireTorpedo(c *cli.Context) {
 	s := c.String("scheduler")
 	v := c.String("storage")
 	n := c.String("node-driver")
-	tests := c.String("tests")
+	//tests := c.String("tests")
 
 	if schedulerDriver, err := scheduler.Get(s); err != nil {
 		logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", s, err)
@@ -675,10 +675,10 @@ func fireTorpedo(c *cli.Context) {
 			n:          nodeDriver,
 		}
 
-		if err := t.run(tests); err != nil {
+		/*if err := t.run(tests); err != nil {
 			logrus.Infof("Torpedo failed with the following error : %v", err)
 			os.Exit(-1)
-		}
+		}*/
 
 		logrus.Printf("Torpedo completed with volume driver: %v, and scheduler: %v, node: %v\n",
 			t.v.String(),
