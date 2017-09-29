@@ -1,24 +1,30 @@
-package tests
+package torpedo
 
 import (
 	"flag"
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
 	"os"
-	"testing"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/portworx/torpedo/drivers/node"
+	// blank importing drivers so they get inited
+	_ "github.com/portworx/torpedo/drivers/node/aws"
+	_ "github.com/portworx/torpedo/drivers/node/ssh"
 	"github.com/portworx/torpedo/drivers/scheduler"
+	// blank importing drivers so they get inited
+	_ "github.com/portworx/torpedo/drivers/scheduler/k8s"
 	"github.com/portworx/torpedo/drivers/volume"
+	// blank importing drivers so they get inited
+	_ "github.com/portworx/torpedo/drivers/volume/portworx"
+	"github.com/portworx/torpedo/pkg/log"
 )
 
 const (
+	// DefaultSpecsRoot specifies the default location of the base specs directory in the Torpedo container
+	DefaultSpecsRoot     = "/specs"
 	schedulerCliFlag     = "scheduler"
 	nodeDriverCliFlag    = "node-driver,n"
 	storageDriverCliFlag = "storage,v"
-	testsCliFlag         = "tests,t"
 )
 
 const (
@@ -29,32 +35,23 @@ const (
 
 var instance Torpedo
 
+// Torpedo is the torpedo testsuite
 type Torpedo struct {
-	instanceID string
-	s          scheduler.Driver
-	v          volume.Driver
-	n          node.Driver
+	InstanceID string
+	S          scheduler.Driver
+	V          volume.Driver
+	N          node.Driver
 }
 
-func TestTorpedo(t *testing.T) {
-	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Torpedo testsuite")
-}
-
-var _ = ginkgo.BeforeSuite(func() {
-	// setup code for torpedo testsuite
-})
-
-var _ = ginkgo.AfterSuite(func() {
-	// teardown code for torpedo testsuite
-})
-
-// Instance returns the torpedo singleton
+// Instance returns the Torpedo singleton
 func Instance() Torpedo {
 	return instance
 }
 
 func init() {
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.StandardLogger().Hooks.Add(log.NewHook())
+
 	s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
 	n := flag.String(nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
 	v := flag.String(storageDriverCliFlag, defaultStorageDriver, "Name of the storage driver to use")
@@ -72,16 +69,16 @@ func init() {
 		os.Exit(-1)
 	} else {
 		instance = Torpedo{
-			instanceID: time.Now().Format("01-02-15h04m05s"),
-			s:          schedulerDriver,
-			v:          volumeDriver,
-			n:          nodeDriver,
+			InstanceID: time.Now().Format("01-02-15h04m05s"),
+			S:          schedulerDriver,
+			V:          volumeDriver,
+			N:          nodeDriver,
 		}
 	}
 
 	logrus.Printf("Torpedo initialized with volume driver: %v, and scheduler: %v, node: %v\n",
-		Instance().v.String(),
-		Instance().s.String(),
-		Instance().n.String(),
+		Instance().V.String(),
+		Instance().S.String(),
+		Instance().N.String(),
 	)
 }

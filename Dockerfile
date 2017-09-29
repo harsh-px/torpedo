@@ -1,9 +1,13 @@
-FROM fedora:25
+FROM golang:1.8.3
+MAINTAINER harsh@portworx.com
+
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN go get github.com/onsi/ginkgo/ginkgo
+RUN go get github.com/onsi/gomega
 
 WORKDIR /
+COPY . /
 
-COPY ./bin/torpedo /
-COPY ./drivers/scheduler/k8s/specs /specs/k8s
-
-ENTRYPOINT ["/torpedo"]
+ENTRYPOINT ["ginkgo -v"]
 CMD []

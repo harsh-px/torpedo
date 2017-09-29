@@ -49,9 +49,9 @@ spec:
             operator: Exists
   containers:
   - name: torpedo
-    image: harshpx/torpedo:latest
+    image: harshpx/torpedo:dev
     #command: ["./torpedo", "fire", "--scheduler", "k8s", "--storage", "pxd", "--node-driver", "ssh" ]
-    command: ["./torpedo", "fire", "--scheduler", "k8s", "--storage", "pxd", "--node-driver", "ssh", "--tests", "testSetupTearDown" ]
+    command: ["ginkgo", "-v", "--", "--scheduler", "k8s", "--storage", "pxd", "--node-driver", "ssh" ]
     tty: true
   restartPolicy: Never
   serviceAccountName: torpedo-account

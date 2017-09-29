@@ -687,8 +687,3 @@ func fireTorpedo(c *cli.Context) {
 		)
 	}
 }
-
-func init() {
-	logrus.SetLevel(logrus.InfoLevel)
-	logrus.StandardLogger().Hooks.Add(NewHook())
-}

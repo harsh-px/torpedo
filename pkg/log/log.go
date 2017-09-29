@@ -1,11 +1,10 @@
-package main
+package log
 
 import (
 	"strings"
 
-	"github.com/fatih/color"
-
 	"github.com/Sirupsen/logrus"
+	"github.com/fatih/color"
 )
 
 type colorizer func(...interface{}) string
