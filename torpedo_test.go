@@ -6,7 +6,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	//. "github.com/portworx/torpedo"
 )
 
 func TestTorpedo(t *testing.T) {
