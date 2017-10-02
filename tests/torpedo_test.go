@@ -1,15 +1,16 @@
-package torpedo
+package tests
 
 import (
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/portworx/torpedo"
 )
 
 func TestTorpedo(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Torpedo testsuites")
+	RunSpecs(t, "Torpedo:Init")
 }
 
 var _ = BeforeSuite(func() {
