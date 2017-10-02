@@ -1,19 +1,12 @@
 package torpedo
 
 import (
-	"flag"
-	"os"
-	"time"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/portworx/torpedo/drivers/node"
 	// blank importing drivers so they get inited
 	_ "github.com/portworx/torpedo/drivers/node/aws"
 	_ "github.com/portworx/torpedo/drivers/node/ssh"
-	"github.com/portworx/torpedo/drivers/scheduler"
 	// blank importing drivers so they get inited
 	_ "github.com/portworx/torpedo/drivers/scheduler/k8s"
-	"github.com/portworx/torpedo/drivers/volume"
 	// blank importing drivers so they get inited
 	_ "github.com/portworx/torpedo/drivers/volume/portworx"
 	"github.com/portworx/torpedo/pkg/log"
@@ -34,7 +27,7 @@ const (
 	defaultStorageDriver = "pxd"
 )
 
-var instance Torpedo
+/*var instance Torpedo
 
 // Torpedo is the torpedo testsuite
 type Torpedo struct {
@@ -43,18 +36,18 @@ type Torpedo struct {
 	V          volume.Driver
 	N          node.Driver
 	SpecDir    string
-}
+}*/
 
 // Instance returns the Torpedo singleton
-func Instance() Torpedo {
+/*func Instance() Torpedo {
 	return instance
-}
+}*/
 
 func init() {
 	logrus.SetLevel(logrus.InfoLevel)
 	logrus.StandardLogger().Hooks.Add(log.NewHook())
 
-	s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
+	/*s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
 	n := flag.String(nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
 	v := flag.String(storageDriverCliFlag, defaultStorageDriver, "Name of the storage driver to use")
 	specDir := flag.String(specDirCliFlag, DefaultSpecsRoot, "Root directory container the application spec files")
@@ -84,5 +77,5 @@ func init() {
 		Instance().V.String(),
 		Instance().S.String(),
 		Instance().N.String(),
-	)
+	)*/
 }

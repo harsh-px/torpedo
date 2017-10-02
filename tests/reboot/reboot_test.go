@@ -5,8 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/ginkgo"
-	. "github.com/portworx/torpedo"
-	"github.com/Sirupsen/logrus"
+	//"github.com/Sirupsen/logrus"
 )
 
 func TestReboot(t *testing.T) {
@@ -15,7 +14,7 @@ func TestReboot(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	logrus.Infof("running reboot tests under torpedo instance: %v", Instance().InstanceID)
+	//logrus.Infof("running reboot tests under torpedo instance: %v", Instance().InstanceID)
 })
 
 var _ = Describe("Setup and teardown", func() {
