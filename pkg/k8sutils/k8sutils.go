@@ -2,6 +2,7 @@ package k8sutils
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 	storage_api "k8s.io/client-go/pkg/apis/storage/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -22,7 +24,16 @@ const (
 
 // GetK8sClient instantiates a k8s client
 func GetK8sClient() (*kubernetes.Clientset, error) {
-	k8sClient, err := loadClientFromServiceAccount()
+	var k8sClient *kubernetes.Clientset
+	var err error
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if len(kubeconfig) > 0 {
+		k8sClient, err = loadClientFromKubeconfig(kubeconfig)
+	} else {
+		k8sClient, err = loadClientFromServiceAccount()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -748,6 +759,19 @@ func RemoveLabelOnNode(name, key string) error {
 // loadClientFromServiceAccount loads a k8s client from a ServiceAccount specified in the pod running px
 func loadClientFromServiceAccount() (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	k8sClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return k8sClient, nil
+}
+
+func loadClientFromKubeconfig(kubeconfig string) (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, err
 	}

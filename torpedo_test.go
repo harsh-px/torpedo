@@ -1,7 +1,6 @@
 package torpedo
 
 import (
-	"path"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -10,11 +9,11 @@ import (
 
 func TestTorpedo(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Torpedo testsuite")
+	RunSpecs(t, "Torpedo testsuites")
 }
 
 var _ = BeforeSuite(func() {
-	err := Instance().S.Init(path.Join(DefaultSpecsRoot, Instance().S.String()))
+	err := Instance().S.Init(Instance().SpecDir)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = Instance().V.Init(Instance().S.String())

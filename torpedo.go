@@ -25,6 +25,7 @@ const (
 	schedulerCliFlag     = "scheduler"
 	nodeDriverCliFlag    = "node-driver,n"
 	storageDriverCliFlag = "storage,v"
+	specDirCliFlag       = "spec-dir"
 )
 
 const (
@@ -41,6 +42,7 @@ type Torpedo struct {
 	S          scheduler.Driver
 	V          volume.Driver
 	N          node.Driver
+	SpecDir    string
 }
 
 // Instance returns the Torpedo singleton
@@ -55,6 +57,7 @@ func init() {
 	s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
 	n := flag.String(nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
 	v := flag.String(storageDriverCliFlag, defaultStorageDriver, "Name of the storage driver to use")
+	specDir := flag.String(specDirCliFlag, DefaultSpecsRoot, "Root directory container the application spec files")
 
 	flag.Parse()
 
@@ -73,6 +76,7 @@ func init() {
 			S:          schedulerDriver,
 			V:          volumeDriver,
 			N:          nodeDriver,
+			SpecDir:    *specDir,
 		}
 	}
 

@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
+	//"os"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	//"github.com/codegangsta/cli"
 	"github.com/portworx/torpedo/drivers/node"
 	_ "github.com/portworx/torpedo/drivers/node/aws"
 	_ "github.com/portworx/torpedo/drivers/node/ssh"
@@ -379,9 +379,9 @@ func (t *torpedo) tearDownContext(ctx *scheduler.Context) error {
 	if err = t.s.Destroy(ctx); err != nil {
 		return err
 	}
-	if err = t.s.WaitForDestroy(ctx); err != nil {
+	/*	if err = t.s.WaitForDestroy(ctx); err != nil {
 		return err
-	}
+	}*/
 	if err = t.s.DeleteVolumes(ctx); err != nil {
 		return err
 	}
@@ -614,71 +614,71 @@ func (t *torpedo) run(tests string) error {
 
 func main() {
 
-	app := cli.NewApp()
-	app.Name = "torpedo"
-	app.Usage = "Run the torpedo scheduler test suite."
+	/*	app := cli.NewApp()
+		app.Name = "torpedo"
+		app.Usage = "Run the torpedo scheduler test suite."
 
-	app.Commands = []cli.Command{
-		{
-			Name:    "fire",
-			Aliases: []string{"f"},
-			Usage:   "Starts the basic test suite",
-			Action:  fireTorpedo,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  schedulerCliFlag,
-					Usage: "Name of the scheduler to use",
-					Value: "k8s",
-				},
-				cli.StringFlag{
-					Name:  storageDriverCliFlag,
-					Usage: "Name of the storage driver to use",
-					Value: "pxd",
-				},
-				cli.StringFlag{
-					Name:  nodeDriverCliFlag,
-					Usage: "Name of the node driver to use",
-					Value: "ssh",
-				},
-				cli.StringFlag{
-					Name:  testsCliFlag,
-					Usage: "Comma-separated list of tests. [Default:  runs all the tests]",
-					Value: "",
+		app.Commands = []cli.Command{
+			{
+				Name:    "fire",
+				Aliases: []string{"f"},
+				Usage:   "Starts the basic test suite",
+				Action:  fireTorpedo,
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  schedulerCliFlag,
+						Usage: "Name of the scheduler to use",
+						Value: "k8s",
+					},
+					cli.StringFlag{
+						Name:  storageDriverCliFlag,
+						Usage: "Name of the storage driver to use",
+						Value: "pxd",
+					},
+					cli.StringFlag{
+						Name:  nodeDriverCliFlag,
+						Usage: "Name of the node driver to use",
+						Value: "ssh",
+					},
+					cli.StringFlag{
+						Name:  testsCliFlag,
+						Usage: "Comma-separated list of tests. [Default:  runs all the tests]",
+						Value: "",
+					},
 				},
 			},
-		},
-	}
-	app.Run(os.Args)
+		}
+		app.Run(os.Args)*/
 
 }
 
-func fireTorpedo(c *cli.Context) {
-	s := c.String("scheduler")
-	v := c.String("storage")
-	n := c.String("node-driver")
-	//tests := c.String("tests")
+/*func fireTorpedo(c *cli.Context) {
+s := c.String("scheduler")
+v := c.String("storage")
+n := c.String("node-driver")
+//tests := c.String("tests")
 
-	if schedulerDriver, err := scheduler.Get(s); err != nil {
-		logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", s, err)
-		os.Exit(-1)
-	} else if volumeDriver, err := volume.Get(v); err != nil {
-		logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", v, err)
-		os.Exit(-1)
-	} else if nodeDriver, err := node.Get(n); err != nil {
-		logrus.Fatalf("Cannot find node driver for %v. Err: %v\n", n, err)
-		os.Exit(-1)
-	} else {
-		t := torpedo{
-			instanceID: time.Now().Format("01-02-15h04m05s"),
-			s:          schedulerDriver,
-			v:          volumeDriver,
-			n:          nodeDriver,
-		}
+if schedulerDriver, err := scheduler.Get(s); err != nil {
+	logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", s, err)
+	os.Exit(-1)
+} else if volumeDriver, err := volume.Get(v); err != nil {
+	logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", v, err)
+	os.Exit(-1)
+} else if nodeDriver, err := node.Get(n); err != nil {
+	logrus.Fatalf("Cannot find node driver for %v. Err: %v\n", n, err)
+	os.Exit(-1)
+} else {
+	t := torpedo{
+		instanceID: time.Now().Format("01-02-15h04m05s"),
+		s:          schedulerDriver,
+		v:          volumeDriver,
+		n:          nodeDriver,
+	}
 
-		/*if err := t.run(tests); err != nil {
-			logrus.Infof("Torpedo failed with the following error : %v", err)
-			os.Exit(-1)
-		}*/
+*/ /*if err := t.run(tests); err != nil {
+	logrus.Infof("Torpedo failed with the following error : %v", err)
+	os.Exit(-1)
+}*/ /*
 
 		logrus.Printf("Torpedo completed with volume driver: %v, and scheduler: %v, node: %v\n",
 			t.v.String(),
@@ -686,4 +686,4 @@ func fireTorpedo(c *cli.Context) {
 			t.n.String(),
 		)
 	}
-}
+}*/

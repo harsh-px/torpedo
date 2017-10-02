@@ -1,5 +1,5 @@
 hash: b942298f0cbad576874087148a276b6bfcda102543bb4e41271b56e485cac448
-updated: 2017-09-29T14:42:16.116812042-07:00
+updated: 2017-09-29T15:45:47.224802102-07:00
 imports:
 - name: github.com/armon/go-metrics
   version: 0a12dc6f6b9da6da644031a1b9b5a85478c5ee27
@@ -148,6 +148,10 @@ imports:
   version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/memberlist
   version: 687988a0b5daaf7ed5051e5e374aef27f8254822
+- name: github.com/howeyc/gopass
+  version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
+- name: github.com/imdario/mergo
+  version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/juju/ratelimit
@@ -218,7 +222,7 @@ imports:
 - name: github.com/opencontainers/go-digest
   version: 279bed98673dd5bef374d3b6e4b09e2af76183bf
 - name: github.com/opencontainers/image-spec
-  version: ebd93fd0782379ca3d821f0fa74f0651a9347a3e
+  version: 7c889fafd04a893f5c5f50b7ab9963d5d64e5242
   subpackages:
   - specs-go
   - specs-go/v1
@@ -416,11 +420,16 @@ imports:
   - pkg/version
   - rest
   - rest/watch
+  - tools/auth
+  - tools/clientcmd
   - tools/clientcmd/api
+  - tools/clientcmd/api/latest
+  - tools/clientcmd/api/v1
   - tools/metrics
   - transport
   - util/cert
   - util/flowcontrol
+  - util/homedir
   - util/integer
 testImports:
 - name: github.com/onsi/gomega

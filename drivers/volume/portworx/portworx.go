@@ -49,46 +49,19 @@ func (d *portworx) Init(sched string) error {
 	if err != nil {
 		return err
 	}
-	nodes := d.schedDriver.GetNodes()
-
-	var endpoint string
-	svc, err := k8sutils.GetService(PXServiceName, PXNamespace)
-	if err != nil {
-		for _, n := range nodes {
-			if n.Type == node.TypeWorker {
-				endpoint = n.Addresses[0]
-				break
-			}
-		}
-	} else {
-		endpoint = svc.Spec.ClusterIP
-	}
-
-	if len(endpoint) == 0 {
-		return fmt.Errorf("failed to get endpoint for portworx volume driver")
-	}
-
-	logrus.Infof("Using %v as endpoint for portworx volume driver", endpoint)
-	clnt, err := clusterclient.NewClusterClient("http://"+endpoint+":9001", "v1")
-	if err != nil {
-		return err
-	}
-	d.clusterManager = clusterclient.ClusterManager(clnt)
-
-	clnt, err = volumeclient.NewDriverClient("http://"+endpoint+":9001", "pxd", "", "pxd-sched")
-	if err != nil {
-		return err
-	}
-	d.volDriver = volumeclient.VolumeDriver(clnt)
-
-	cluster, err := d.clusterManager.Enumerate()
-	if err != nil {
-		return err
-	}
 
 	d.schedOps, err = schedops.Get(sched)
 	if err != nil {
 		return fmt.Errorf("failed to get scheduler operator for portworx. Err: %v", err)
+	}
+
+	if err = d.setDriver(); err != nil {
+		return err
+	}
+
+	cluster, err := d.clusterManager.Enumerate()
+	if err != nil {
+		return err
 	}
 
 	logrus.Infof("The following Portworx nodes are in the cluster:")
@@ -328,6 +301,73 @@ func (d *portworx) WaitStart(n node.Node) error {
 	}
 
 	return err
+}
+
+func (d *portworx) setDriver() error {
+	var err error
+	nodes := d.schedDriver.GetNodes()
+
+	var endpoint string
+	// Try portworx-service first
+	svc, err := k8sutils.GetService(PXServiceName, PXNamespace)
+	if err == nil {
+		endpoint = svc.Spec.ClusterIP
+		if ok, err := d.testEndpoint(endpoint); ok && err == nil {
+			if err = d.setClientsForEndpoint(endpoint); err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+
+	// Try direct address of cluster nodes
+	for _, n := range nodes {
+		if n.Type == node.TypeWorker {
+			for _, addr := range n.Addresses {
+				if ok, err := d.testEndpoint(addr); ok && err == nil {
+					if err = d.setClientsForEndpoint(addr); err != nil {
+						return err
+					}
+
+					return nil
+				}
+			}
+		}
+	}
+
+	return fmt.Errorf("failed to get endpoint for portworx volume driver")
+}
+
+func (d *portworx) setClientsForEndpoint(endpoint string) error {
+	clnt, err := clusterclient.NewClusterClient("http://"+endpoint+":9001", "v1")
+	if err != nil {
+		return err
+	}
+	d.clusterManager = clusterclient.ClusterManager(clnt)
+
+	clnt, err = volumeclient.NewDriverClient("http://"+endpoint+":9001", "pxd", "", "pxd-sched")
+	if err != nil {
+		return err
+	}
+	d.volDriver = volumeclient.VolumeDriver(clnt)
+
+	logrus.Infof("Using %v as endpoint for portworx volume driver", endpoint)
+
+	return nil
+}
+
+func (d *portworx) testEndpoint(endpoint string) (bool, error) {
+	clnt, err := clusterclient.NewClusterClient("http://"+endpoint+":9001", "v1")
+	if err == nil {
+		clusterManager := clusterclient.ClusterManager(clnt)
+		_, err := clusterManager.Enumerate()
+		if err == nil {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (d *portworx) StartDriver(n node.Node) error {
