@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/portworx/torpedo/pkg/errors"
 )
 
@@ -73,7 +72,6 @@ type Driver interface {
 
 // Register registers the given node driver
 func Register(name string, d Driver) error {
-	logrus.Infof("Registering node driver: %v", name)
 	nodeDrivers[name] = d
 	return nil
 }

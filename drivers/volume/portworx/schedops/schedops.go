@@ -1,7 +1,6 @@
 package schedops
 
 import (
-	"github.com/Sirupsen/logrus"
 	"github.com/portworx/torpedo/drivers/node"
 	"github.com/portworx/torpedo/pkg/errors"
 )
@@ -22,7 +21,6 @@ var (
 
 // Register registers the given portworx scheduler operator
 func Register(name string, d Driver) error {
-	logrus.Infof("Registering portworx scheduler operator: %v", name)
 	schedOpsRegistry[name] = d
 	return nil
 }

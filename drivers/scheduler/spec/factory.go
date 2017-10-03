@@ -76,7 +76,7 @@ func NewFactory(specDir string, parser Parser) (*Factory, error) {
 		if file.IsDir() {
 			specID := file.Name()
 
-			logrus.Infof("Parsing: %v...", path.Join(f.specDir, specID))
+			logrus.Debugf("Parsing: %v...", path.Join(f.specDir, specID))
 
 			specs, err := f.specParser.ParseSpecs(path.Join(f.specDir, file.Name()))
 			if err != nil {

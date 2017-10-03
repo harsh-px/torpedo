@@ -1,11 +1,12 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	. "github.com/onsi/ginkgo"
-	//"github.com/Sirupsen/logrus"
+	. "github.com/onsi/gomega"
+	. "github.com/portworx/torpedo"
 )
 
 func TestReboot(t *testing.T) {
@@ -14,7 +15,7 @@ func TestReboot(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	//logrus.Infof("running reboot tests under torpedo instance: %v", Instance().InstanceID)
+	By(fmt.Sprintf("running reboot tests under torpedo instance: %v", Instance().InstanceID))
 })
 
 var _ = Describe("Setup and teardown", func() {
@@ -24,5 +25,3 @@ var _ = Describe("Setup and teardown", func() {
 		Specify("the total amount is 0.00", func() {})
 	})
 })
-
-

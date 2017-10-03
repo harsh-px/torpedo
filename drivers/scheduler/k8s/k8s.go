@@ -52,7 +52,6 @@ func (k *k8s) IsNodeReady(n node.Node) error {
 	}
 
 	if _, err := task.DoRetryWithTimeout(t, 5*time.Minute, 10*time.Second); err != nil {
-		logrus.Infof("[debug] node timed out. %#v", n)
 		return err
 	}
 
@@ -192,6 +191,7 @@ func (k *k8s) Schedule(instanceID string, options scheduler.ScheduleOptions) ([]
 
 	var contexts []*scheduler.Context
 	for _, app := range apps {
+		logrus.Infof("[debug] app: %v", app.Key)
 		appNamespace := getAppNamespaceName(app, instanceID)
 		ns, err := k8sutils.CreateNamespace(appNamespace, map[string]string{
 			"creater": "torpedo",

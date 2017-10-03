@@ -5,7 +5,7 @@ TAGS := daemon
 endif
 
 ifndef PKGS
-PKGS := $(shell go list ./... 2>&1 | grep -v 'github.com/portworx/torpedo/vendor')
+PKGS := $(shell go list ./... 2>&1 | grep -v 'github.com/portworx/torpedo/vendor' | grep -v 'github.com/portworx/torpedo/tests')
 endif
 
 ifeq ($(BUILD_TYPE),debug)

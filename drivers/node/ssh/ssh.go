@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"time"
 	"os"
+	"time"
 
 	"github.com/portworx/torpedo/drivers/node"
 	"github.com/portworx/torpedo/drivers/scheduler"
@@ -280,7 +280,7 @@ func (s *ssh) getOneUsableAddr(n node.Node, options node.ConnectionOpts) (string
 			return addr, nil
 		}
 	}
-	return "", fmt.Errorf("no usable address found. Tried: %v. " + "" +
+	return "", fmt.Errorf("no usable address found. Tried: %v. "+""+
 		"Ensure you have setup the nodes for ssh access as per the README", n.Addresses)
 }
 
