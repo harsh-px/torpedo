@@ -72,7 +72,10 @@ type Driver interface {
 
 // Register registers the given node driver
 func Register(name string, d Driver) error {
-	nodeDrivers[name] = d
+	if _, ok := nodeDrivers[name]; !ok {
+		nodeDrivers[name] = d
+	}
+
 	return nil
 }
 

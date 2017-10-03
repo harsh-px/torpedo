@@ -21,7 +21,9 @@ var (
 
 // Register registers the given portworx scheduler operator
 func Register(name string, d Driver) error {
-	schedOpsRegistry[name] = d
+	if _, ok := schedOpsRegistry[name]; !ok {
+		schedOpsRegistry[name] = d
+	}
 	return nil
 }
 

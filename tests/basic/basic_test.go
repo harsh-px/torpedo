@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/portworx/torpedo"
 	"github.com/portworx/torpedo/drivers/scheduler"
+	. "github.com/portworx/torpedo/tests"
 )
 
 func TestBasic(t *testing.T) {
@@ -16,10 +17,10 @@ func TestBasic(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	By(fmt.Sprintf("running basic tests under torpedo instance: %v", Instance().InstanceID))
+	InitInstance()
 })
 
-// testSetupTearDown performs basic test of starting an application and destroying it (along with storage)
+// This test performs basic test of starting an application and destroying it (along with storage)
 var _ = Describe("Setup and teardown", func() {
 	var err error
 	var contexts []*scheduler.Context

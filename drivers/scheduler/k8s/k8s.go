@@ -78,6 +78,9 @@ func (k *k8s) Init(specDir string) error {
 		return err
 	}
 
+	apps := k.specFactory.GetAll()
+	logrus.Infof("[debug] inited %v apps for %p", len(apps), k)
+
 	return nil
 }
 
@@ -189,9 +192,10 @@ func (k *k8s) Schedule(instanceID string, options scheduler.ScheduleOptions) ([]
 		apps = k.specFactory.GetAll()
 	}
 
+	logrus.Infof("[debug] found %v apps for %p", len(apps), k)
+
 	var contexts []*scheduler.Context
 	for _, app := range apps {
-		logrus.Infof("[debug] app: %v", app.Key)
 		appNamespace := getAppNamespaceName(app, instanceID)
 		ns, err := k8sutils.CreateNamespace(appNamespace, map[string]string{
 			"creater": "torpedo",

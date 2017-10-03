@@ -40,7 +40,10 @@ var (
 
 // Register registers the given volume driver
 func Register(name string, d Driver) error {
-	volDrivers[name] = d
+	if _, ok := volDrivers[name]; !ok {
+		volDrivers[name] = d
+	}
+
 	return nil
 }
 

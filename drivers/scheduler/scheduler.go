@@ -76,7 +76,9 @@ var (
 
 // Register registers the given scheduler driver
 func Register(name string, d Driver) error {
-	schedulers[name] = d
+	if _, ok := schedulers[name]; !ok {
+		schedulers[name] = d
+	}
 	return nil
 }
 

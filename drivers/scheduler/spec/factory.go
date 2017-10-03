@@ -20,8 +20,10 @@ var appSpecFactory = make(map[string]*AppSpec)
 
 // register registers a new spec with the factory
 func (f *Factory) register(id string, app *AppSpec) {
-	logrus.Infof("Registering app: %v", id)
-	appSpecFactory[id] = app
+	if _, ok := appSpecFactory[id]; !ok {
+		logrus.Infof("Registering app: %v", id)
+		appSpecFactory[id] = app
+	}
 }
 
 // Get returns a registered application

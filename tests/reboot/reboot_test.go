@@ -1,12 +1,11 @@
 package tests
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/portworx/torpedo"
+	. "github.com/portworx/torpedo/tests"
 )
 
 func TestReboot(t *testing.T) {
@@ -15,7 +14,7 @@ func TestReboot(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	By(fmt.Sprintf("running reboot tests under torpedo instance: %v", Instance().InstanceID))
+	InitInstance()
 })
 
 var _ = Describe("Setup and teardown", func() {

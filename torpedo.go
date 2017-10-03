@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -23,6 +24,12 @@ import (
 )
 
 var instance *Torpedo
+var once sync.Once
+
+var schedulerDriver scheduler.Driver
+var volumeDriver volume.Driver
+var nodeDriver node.Driver
+var specDir *string
 
 // Torpedo is the torpedo testsuite
 type Torpedo struct {
@@ -107,9 +114,11 @@ func (t *Torpedo) TearDownContext(ctx *scheduler.Context) error {
 	if err = t.S.Destroy(ctx); err != nil {
 		return err
 	}
-	/*	if err = t.s.WaitForDestroy(ctx); err != nil {
+
+	if err = t.S.WaitForDestroy(ctx); err != nil {
 		return err
-	}*/
+	}
+
 	if err = t.S.DeleteVolumes(ctx); err != nil {
 		return err
 	}
@@ -119,31 +128,7 @@ func (t *Torpedo) TearDownContext(ctx *scheduler.Context) error {
 
 // Instance returns the Torpedo singleton
 func Instance() *Torpedo {
-	return instance
-}
-
-func init() {
-	logrus.SetLevel(logrus.InfoLevel)
-	logrus.StandardLogger().Hooks.Add(log.NewHook())
-
-	s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
-	n := flag.String(nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
-	v := flag.String(storageDriverCliFlag, defaultStorageDriver, "Name of the storage driver to use")
-	specDir := flag.String(specDirCliFlag, DefaultSpecsRoot,
-		"Root directory container the application spec files")
-
-	flag.Parse()
-
-	if schedulerDriver, err := scheduler.Get(*s); err != nil {
-		logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", *s, err)
-		os.Exit(-1)
-	} else if volumeDriver, err := volume.Get(*v); err != nil {
-		logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", *v, err)
-		os.Exit(-1)
-	} else if nodeDriver, err := node.Get(*n); err != nil {
-		logrus.Fatalf("Cannot find node driver for %v. Err: %v\n", *n, err)
-		os.Exit(-1)
-	} else {
+	once.Do(func() {
 		instance = &Torpedo{
 			InstanceID: time.Now().Format("01-02-15h04m05s"),
 			S:          schedulerDriver,
@@ -151,5 +136,34 @@ func init() {
 			N:          nodeDriver,
 			SpecDir:    *specDir,
 		}
+
+		logrus.Infof("[debug] create torpedo instance: %p", instance)
+	})
+
+	return instance
+}
+
+func init() {
+	var err error
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.StandardLogger().Hooks.Add(log.NewHook())
+
+	s := flag.String(schedulerCliFlag, defaultScheduler, "Name of the scheduler to us")
+	n := flag.String(nodeDriverCliFlag, defaultNodeDriver, "Name of the node driver to use")
+	v := flag.String(storageDriverCliFlag, defaultStorageDriver, "Name of the storage driver to use")
+	specDir = flag.String(specDirCliFlag, DefaultSpecsRoot,
+		"Root directory container the application spec files")
+
+	flag.Parse()
+
+	if schedulerDriver, err = scheduler.Get(*s); err != nil {
+		logrus.Fatalf("Cannot find scheduler driver for %v. Err: %v\n", *s, err)
+		os.Exit(-1)
+	} else if volumeDriver, err = volume.Get(*v); err != nil {
+		logrus.Fatalf("Cannot find volume driver for %v. Err: %v\n", *v, err)
+		os.Exit(-1)
+	} else if nodeDriver, err = node.Get(*n); err != nil {
+		logrus.Fatalf("Cannot find node driver for %v. Err: %v\n", *n, err)
+		os.Exit(-1)
 	}
 }
