@@ -2,10 +2,13 @@
 
 EXTRA_ARGS=""
 
+if [ -n "${VERBOSE}" ]; then
+    VERBOSE="--v"
+fi
+
 if [ -n "${SKIP_TESTS}" ]; then
     EXTRA_ARGS="--skip=$SKIP_TESTS $EXTRA_ARGS"
 fi
-
 
 if [ -z "${TORPEDO_IMG}" ]; then
     TORPEDO_IMG="portworx/torpedo:latest"
@@ -13,7 +16,6 @@ if [ -z "${TORPEDO_IMG}" ]; then
 fi
 
 kubectl delete pod torpedo || true
-
 
 echo "Deploying torpedo pod..."
 cat <<EOF | kubectl create -f -
@@ -71,7 +73,7 @@ spec:
   - name: torpedo
     image: ${TORPEDO_IMG}
     command: [ "ginkgo" ]
-    args: [ "--v",
+    args: [ "$VERBOSE",
             "--trace",
             "--failFast",
             "$EXTRA_ARGS",
@@ -96,7 +98,7 @@ for i in $(seq 1 300) ; do
     kubectl logs -f torpedo
 
     endState=`kubectl get pod torpedo | grep -v NAME | awk '{print $3}'`
-    if [ "$endState" == "Completed" ]; then
+    if [ "$endState" == "Running" ] || [ "$endState" == "Completed" ]; then
         exit 0
     else
         echo "Error: Torpedo finished with $endState state"
