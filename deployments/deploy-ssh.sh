@@ -99,6 +99,7 @@ for i in $(seq 1 300) ; do
 
     endState=`kubectl get pod torpedo | grep -v NAME | awk '{print $3}'`
     if [ "$endState" == "Running" ] || [ "$endState" == "Completed" ]; then
+        echo "Success: Torpedo finished with $endState state"
         exit 0
     else
         echo "Error: Torpedo finished with $endState state"
