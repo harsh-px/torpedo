@@ -96,7 +96,7 @@ for i in $(seq 1 300) ; do
   if [ "$state" == "Running" ] || [ "$state" == "Completed" ]; then
     echo ""
     kubectl logs -f torpedo
-
+    sleep 5
     endState=`kubectl get pod torpedo | grep -v NAME | awk '{print $3}'`
     if [ "$endState" == "Running" ] || [ "$endState" == "Completed" ]; then
         echo "Success: Torpedo finished with $endState state"
