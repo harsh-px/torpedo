@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/portworx/sched-ops/task"
 	"github.com/portworx/torpedo/drivers/node"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -103,7 +104,7 @@ func (a *aws) TestConnection(n node.Node, options node.ConnectionOpts) error {
 		}
 	}
 	if sendCommandOutput.Command == nil || sendCommandOutput.Command.CommandId == nil {
-		return fmt.Errorf("No command returned after sending command to %s", instanceID)
+		return fmt.Errorf("no command returned after sending command to %s", instanceID)
 	}
 	listCmdsInput := &ssm.ListCommandInvocationsInput{
 		CommandId: sendCommandOutput.Command.CommandId,
@@ -127,6 +128,7 @@ func (a *aws) connect(n node.Node, listCmdsInput *ssm.ListCommandInvocationsInpu
 	for _, cmd := range listCmdInvsOutput.CommandInvocations {
 		status = strings.TrimSpace(*cmd.StatusDetails)
 		if status == "Success" {
+			logrus.Infof("[debug] cmd: %v", cmd)
 			return nil
 		}
 	}
