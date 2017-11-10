@@ -178,6 +178,7 @@ func (a *awsOps) RunCommand(command string, instanceID string) (string, error) {
 				logrus.Infof("[debug] cmd: %v", cmd)
 
 				// TODO : Read command output from S3
+
 				return "", nil
 			}
 		}

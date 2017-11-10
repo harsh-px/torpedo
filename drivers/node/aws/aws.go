@@ -2,6 +2,7 @@ package aws
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -98,13 +99,42 @@ func (a *aws) ShutdownNode(n node.Node, options node.ShutdownNodeOpts) error {
 func (a *aws) FindFiles(path string, n node.Node, options node.FindOpts) (string, error) {
 	inst, err := awsops.Instance().SearchInstanceByAddresses(n.Addresses)
 	if err != nil {
-		return &node.ErrFailedToFindFileOnNode{
+		return "", &node.ErrFailedToFindFileOnNode{
 			Node:  n,
 			Cause: err.Error(),
 		}
 	}
 
-	return "", nil
+	if inst == nil {
+		return "", &node.ErrFailedToFindFileOnNode{
+			Node:  n,
+			Cause: "failed to find AWS instances for node",
+		}
+	}
+
+	findCmd := "sudo find " + path
+	if options.Name != "" {
+		findCmd += " -name " + options.Name
+	}
+	if options.MinDepth > 0 {
+		findCmd += " -mindepth " + strconv.Itoa(options.MinDepth)
+	}
+	if options.MaxDepth > 0 {
+		findCmd += " -maxdepth " + strconv.Itoa(options.MaxDepth)
+	}
+
+	t := func() (interface{}, error) {
+		return awsops.Instance().RunCommand(findCmd, *inst.InstanceId)
+	}
+
+	if output, err := task.DoRetryWithTimeout(t, options.Timeout, options.TimeBeforeRetry); err != nil {
+		return "", &node.ErrFailedToFindFileOnNode{
+			Node:  n,
+			Cause: fmt.Sprintf("failed to run command due to: %v", err),
+		}
+	}
+
+	return output.(string), nil
 }
 
 func init() {
