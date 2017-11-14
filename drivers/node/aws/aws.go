@@ -59,7 +59,7 @@ func (a *aws) TestConnection(n node.Node, options node.ConnectionOpts) error {
 
 	t := func() (interface{}, error) {
 		_, err = awsops.Instance().RunCommand("uptime", *inst.InstanceId)
-		return err
+		return "", err
 	}
 
 	if _, err := task.DoRetryWithTimeout(t, options.Timeout, options.TimeBeforeRetry); err != nil {
@@ -127,7 +127,8 @@ func (a *aws) FindFiles(path string, n node.Node, options node.FindOpts) (string
 		return awsops.Instance().RunCommand(findCmd, *inst.InstanceId)
 	}
 
-	if output, err := task.DoRetryWithTimeout(t, options.Timeout, options.TimeBeforeRetry); err != nil {
+	output, err := task.DoRetryWithTimeout(t, options.Timeout, options.TimeBeforeRetry)
+	if err != nil {
 		return "", &node.ErrFailedToFindFileOnNode{
 			Node:  n,
 			Cause: fmt.Sprintf("failed to run command due to: %v", err),
